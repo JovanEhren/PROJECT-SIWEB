@@ -342,25 +342,30 @@ export function LacakPaketPage() {
                       <div className="h-[220px] bg-[linear-gradient(135deg,#6a8b7c_0%,#b8d7bf_46%,#7ca19b_100%)] opacity-85" />
                     }
                   >
-                    {activeShipment.koordinatAsalLat != null && activeShipment.koordinatAsalLng != null ? (
-                      <TrackingMap
-                        origin={activeShipment.koordinatAsalLat != null && activeShipment.koordinatAsalLng != null ? {
-                          lat: activeShipment.koordinatAsalLat,
-                          lng: activeShipment.koordinatAsalLng,
-                          label: locationInfo?.origin || "Asal"
-                        } : null}
-                        destination={activeShipment.koordinatTujuanLat != null && activeShipment.koordinatTujuanLng != null ? {
-                          lat: activeShipment.koordinatTujuanLat,
-                          lng: activeShipment.koordinatTujuanLng,
-                          label: locationInfo?.destination || "Tujuan"
-                        } : null}
-                        waktuBerangkat={activeShipment.waktuBerangkat ?? null}
-                        durasiEstimasiMs={activeShipment.durasiEstimasiMs ?? null}
-                        heightClassName="h-[220px]"
-                      />
-                    ) : (
-                      <div className="h-[220px] bg-[linear-gradient(135deg,#6a8b7c_0%,#b8d7bf_46%,#7ca19b_100%)] opacity-85" />
-                    )}
+                    <TrackingMap
+                      origin={
+                        activeShipment.koordinatAsalLat != null && activeShipment.koordinatAsalLng != null
+                          ? { lat: activeShipment.koordinatAsalLat, lng: activeShipment.koordinatAsalLng, label: locationInfo?.origin || "Asal" }
+                          : activeShipment.trackingEvents?.[0]
+                          ? { lat: activeShipment.trackingEvents[0].lat, lng: activeShipment.trackingEvents[0].lng, label: locationInfo?.origin || "Asal" }
+                          : null
+                      }
+                      destination={
+                        activeShipment.koordinatTujuanLat != null && activeShipment.koordinatTujuanLng != null
+                          ? { lat: activeShipment.koordinatTujuanLat, lng: activeShipment.koordinatTujuanLng, label: locationInfo?.destination || "Tujuan" }
+                          : activeShipment.trackingEvents?.length
+                          ? { lat: activeShipment.trackingEvents[activeShipment.trackingEvents.length - 1].lat, lng: activeShipment.trackingEvents[activeShipment.trackingEvents.length - 1].lng, label: locationInfo?.destination || "Tujuan" }
+                          : null
+                      }
+                      latest={
+                        locationInfo?.latestLat != null && locationInfo?.latestLng != null
+                          ? { lat: locationInfo.latestLat, lng: locationInfo.latestLng, label: locationInfo.latestLabel || "Posisi paket" }
+                          : null
+                      }
+                      waktuBerangkat={activeShipment.waktuBerangkat ?? null}
+                      durasiEstimasiMs={activeShipment.durasiEstimasiMs ?? null}
+                      heightClassName="h-[220px]"
+                    />
                   </TrackingMapBoundary>
                   <div className="flex items-center gap-2 border-t border-[#d2ded1] bg-[#f4f8f3] px-3 py-2 text-[11px] text-[#4f5b52]">
                     <CheckIcon className="h-3.5 w-3.5 text-[#1f8f4e]" />
