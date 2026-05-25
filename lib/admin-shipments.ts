@@ -545,7 +545,8 @@ async function parseJsonResponse<T>(response: Response): Promise<T> {
 
 export async function fetchShipmentsFromDatabase(search = "") {
   const response = await fetch(`/api/shipments?search=${encodeURIComponent(search)}`, {
-    cache: "no-store"
+    cache: "no-store",
+    signal: AbortSignal.timeout(10000)
   });
   const data = await parseJsonResponse<{ shipments: ShipmentRecord[] }>(response);
   return data.shipments;

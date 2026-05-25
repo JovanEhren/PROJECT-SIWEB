@@ -18,7 +18,10 @@ if (!connectionString) {
 export const pool =
   globalThis.shipinPgPool ||
   new Pool({
-    connectionString
+    connectionString,
+    max: 20, // Connection pool max
+    idleTimeout: 30, // Close idle connections after 30s
+    connectionTimeoutMillis: 5000 // Connection timeout 5s
   });
 
 export const db = pool;

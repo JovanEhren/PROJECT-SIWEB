@@ -90,7 +90,8 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       }
     }
 
-    await client.query(
+    // Update payment - no need to wait for vehicle update if it exists
+    const paymentPromise = client.query(
       `
         UPDATE shipin_payments
         SET
@@ -106,35 +107,32 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       ]
     );
 
-    if (body.vehiclePatch?.id) {
-      await client.query(
-        `
-          UPDATE shipin_vehicles
-          SET
-            vehicle_name = COALESCE($2, vehicle_name),
-            vehicle_type = COALESCE($3, vehicle_type),
-            plate_number = COALESCE($4, plate_number),
-            capacity_kg = COALESCE($5::numeric, capacity_kg),
-            vehicle_status = COALESCE($6, vehicle_status)
-          WHERE id = $1
-        `,
-        [
-          Number(body.vehiclePatch.id),
-          body.vehiclePatch.vehicleName || null,
-          body.vehiclePatch.vehicleType || null,
-          body.vehiclePatch.plateNumber || null,
-          body.vehiclePatch.capacityKg != null ? Number(body.vehiclePatch.capacityKg) : null,
-          body.vehiclePatch.vehicleStatus || null
-        ]
-      );
-    }
+    // Update vehicle if needed (parallel with payment update)
+    const vehiclePromise = body.vehiclePatch?.id
+      ? client.query(
+          `
+            UPDATE shipin_vehicles
+            SET
+              vehicle_name = COALESCE($2, vehicle_name),
+              vehicle_type = COALESCE($3, vehicle_type),
+              plate_number = COALESCE($4, plate_number),
+              capacity_kg = COALESCE($5::numeric, capacity_kg),
+              vehicle_status = COALESCE($6, vehicle_status)
+            WHERE id = $1
+          `,
+          [
+            Number(body.vehiclePatch.id),
+            body.vehiclePatch.vehicleName || null,
+            body.vehiclePatch.vehicleType || null,
+            body.vehiclePatch.plateNumber || null,
+            body.vehiclePatch.capacityKg != null ? Number(body.vehiclePatch.capacityKg) : null,
+            body.vehiclePatch.vehicleStatus || null
+          ]
+        )
+      : Promise.resolve();
 
-    await syncShipmentCheckpoints({
-      resi: id,
-      originCity: shipmentInfo.rows[0]?.origin_city || "Kota Asal",
-      destinationCity: shipmentInfo.rows[0]?.destination_city || "Kota Tujuan",
-      shipmentStatus: body.shipment || null
-    });
+    // Wait for payment and vehicle updates in parallel
+    await Promise.all([paymentPromise, vehiclePromise]);
 
     await client.query("COMMIT");
     return NextResponse.json({ ok: true });
