@@ -20,12 +20,14 @@ import {
   runProgressCheck,
   ShipmentRecord
 } from "@/lib/admin-shipments";
+import { resolveAreaCoordinate } from "@/lib/shipping-pricing";
 import {
   CHECKPOINT_SEQUENCE,
   formatCheckpointTime,
   getCheckpointLabel,
   getCheckpointOrder
 } from "@/lib/utils/checkpoint-shared";
+import { TRACKING_REFRESH_INTERVAL_MS } from "@/lib/tracking-config";
 
 const TrackingMap = dynamic(
   () => import("@/components/public/tracking-map").then((mod) => mod.TrackingMap),
@@ -86,6 +88,13 @@ function parseOriginDestination(shipment: ShipmentRecord) {
 function getCurrentStatus(shipment: ShipmentRecord) {
   const latest = shipment.trackingEvents?.[shipment.trackingEvents.length - 1];
   return latest?.status || "Pesanan diterima";
+}
+
+function hasValidCoordinate(lat?: number | null, lng?: number | null) {
+  if (lat == null || lng == null) return false;
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return false;
+  if (lat === 0 && lng === 0) return false;
+  return Math.abs(lat) <= 90 && Math.abs(lng) <= 180;
 }
 
 export function LacakPaketPage() {
@@ -178,6 +187,7 @@ export function LacakPaketPage() {
     }
 
     const interval = window.setInterval(async () => {
+      await runProgressCheck().catch(() => null);
       const data = await fetchTrackingByResi(activeResi).catch(() => null);
       if (!data?.shipment) return;
       setRows([data.shipment]);
@@ -187,7 +197,7 @@ export function LacakPaketPage() {
           waktu: new Date(checkpoint.waktu)
         }))
       );
-    }, 10000);
+    }, TRACKING_REFRESH_INTERVAL_MS);
 
     return () => window.clearInterval(interval);
   }, [activeResi]);
@@ -222,12 +232,45 @@ export function LacakPaketPage() {
   const locationInfo = useMemo(() => {
     if (!activeShipment) return null;
     const { origin, destination } = parseOriginDestination(activeShipment);
+    const originCoord = hasValidCoordinate(
+      activeShipment.koordinatAsalLat,
+      activeShipment.koordinatAsalLng
+    )
+      ? {
+          lat: activeShipment.koordinatAsalLat as number,
+          lng: activeShipment.koordinatAsalLng as number
+        }
+      : resolveAreaCoordinate({
+          city: activeShipment.originCity || origin,
+          province: activeShipment.originProvince
+        });
+    const destinationCoord = hasValidCoordinate(
+      activeShipment.koordinatTujuanLat,
+      activeShipment.koordinatTujuanLng
+    )
+      ? {
+          lat: activeShipment.koordinatTujuanLat as number,
+          lng: activeShipment.koordinatTujuanLng as number
+        }
+      : resolveAreaCoordinate({
+          city: activeShipment.destinationCity || destination,
+          province: activeShipment.destinationProvince
+        });
+    const latestCoord = hasValidCoordinate(activeShipment.latestLat, activeShipment.latestLng)
+      ? {
+          lat: activeShipment.latestLat as number,
+          lng: activeShipment.latestLng as number
+        }
+      : null;
+
     return {
       origin,
       destination,
       latestLabel: activeShipment.latestLocationLabel || destination,
-      latestLat: activeShipment.latestLat,
-      latestLng: activeShipment.latestLng
+      latestLat: latestCoord?.lat,
+      latestLng: latestCoord?.lng,
+      originCoord,
+      destinationCoord
     };
   }, [activeShipment]);
 
@@ -353,20 +396,16 @@ export function LacakPaketPage() {
                     }
                   >
                     <TrackingMap
-                      origin={
-                        activeShipment.koordinatAsalLat != null && activeShipment.koordinatAsalLng != null
-                          ? { lat: activeShipment.koordinatAsalLat, lng: activeShipment.koordinatAsalLng, label: locationInfo?.origin || "Asal" }
-                          : activeShipment.trackingEvents?.[0]
-                          ? { lat: activeShipment.trackingEvents[0].lat, lng: activeShipment.trackingEvents[0].lng, label: locationInfo?.origin || "Asal" }
-                          : null
-                      }
-                      destination={
-                        activeShipment.koordinatTujuanLat != null && activeShipment.koordinatTujuanLng != null
-                          ? { lat: activeShipment.koordinatTujuanLat, lng: activeShipment.koordinatTujuanLng, label: locationInfo?.destination || "Tujuan" }
-                          : activeShipment.trackingEvents?.length
-                          ? { lat: activeShipment.trackingEvents[activeShipment.trackingEvents.length - 1].lat, lng: activeShipment.trackingEvents[activeShipment.trackingEvents.length - 1].lng, label: locationInfo?.destination || "Tujuan" }
-                          : null
-                      }
+                      origin={locationInfo ? {
+                        lat: locationInfo.originCoord.lat,
+                        lng: locationInfo.originCoord.lng,
+                        label: locationInfo.origin || "Asal"
+                      } : null}
+                      destination={locationInfo ? {
+                        lat: locationInfo.destinationCoord.lat,
+                        lng: locationInfo.destinationCoord.lng,
+                        label: locationInfo.destination || "Tujuan"
+                      } : null}
                       latest={
                         locationInfo?.latestLat != null && locationInfo?.latestLng != null
                           ? { lat: locationInfo.latestLat, lng: locationInfo.latestLng, label: locationInfo.latestLabel || "Posisi paket" }
@@ -380,7 +419,7 @@ export function LacakPaketPage() {
                   </TrackingMapBoundary>
                   <div className="flex items-center gap-2 border-t border-[#d2ded1] bg-[#f4f8f3] px-3 py-2 text-[11px] text-[#4f5b52]">
                     <CheckIcon className="h-3.5 w-3.5 text-[#1f8f4e]" />
-                    Rute: {locationInfo?.origin} → {locationInfo?.destination}
+                    Rute: {locationInfo?.origin} {"->"} {locationInfo?.destination}
                   </div>
                 </div>
               </article>
@@ -481,7 +520,7 @@ export function LacakPaketPage() {
             </div>
           </div>
           <div className="flex flex-col gap-4 pt-7 text-[14px] text-shipin-text sm:flex-row sm:items-center sm:justify-between">
-            <p>© 2024 SHIPIN GO. Hak Cipta Dilindungi.</p>
+            <p>(c) 2024 SHIPIN GO. Hak Cipta Dilindungi.</p>
             <div className="flex gap-6">
               <a href="https://www.instagram.com/" target="_blank" rel="noreferrer" className="hover:text-shipin-deep">
                 Instagram
@@ -499,3 +538,4 @@ export function LacakPaketPage() {
     </main>
   );
 }
+

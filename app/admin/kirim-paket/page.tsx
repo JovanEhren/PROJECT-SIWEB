@@ -6,8 +6,9 @@ import { useRouter } from "next/navigation";
 
 import { PrinterIcon, ShieldIcon } from "@/components/icons";
 import { SearchableSelect } from "@/components/ui/searchable-select";
-import { createShipmentInDatabase, fetchVehiclesFromDatabase, geocodeAddress, ServiceType, VehicleOption } from "@/lib/admin-shipments";
-import { AREA_TREE, estimateShippingCost, formatFullAddress } from "@/lib/shipping-pricing";
+import { createShipmentInDatabase, fetchVehiclesFromDatabase, ServiceType, VehicleOption } from "@/lib/admin-shipments";
+import { AREA_TREE, estimateShippingCost, formatFullAddress, resolveAreaCoordinate } from "@/lib/shipping-pricing";
+import { getDemoTrackingDurationMs } from "@/lib/tracking-config";
 
 const serviceOptions = [
   {
@@ -300,14 +301,17 @@ function AdminKirimPaketContent() {
     setIsSubmitting(true);
 
     try {
-      // Geocode origin and destination addresses
-      const [originCoords, destinationCoords] = await Promise.all([
-        geocodeAddress(senderAddress),
-        geocodeAddress(receiverAddress)
-      ]);
+      const originCoords = resolveAreaCoordinate({
+        city: senderCity,
+        province: senderProvince
+      });
+      const destinationCoords = resolveAreaCoordinate({
+        city: receiverCity,
+        province: receiverProvince
+      });
 
-      // Calculate estimated duration based on service
-      const durasiEstimasiMs = service === "EKSPRES" ? 24 * 60 * 60 * 1000 : 72 * 60 * 60 * 1000;
+      // Demo tracking speed: fast enough to observe route changes without waiting hours.
+      const durasiEstimasiMs = getDemoTrackingDurationMs(service);
 
       const created = await createShipmentInDatabase({
         senderName,

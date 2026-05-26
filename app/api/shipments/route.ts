@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { pool } from "@/lib/db";
 import { CHECKPOINT_STATUS } from "@/lib/utils/checkpoint-shared";
 import { addCheckpoint, syncShipmentCheckpoints } from "@/lib/utils/checkpoint";
+import { getDemoTrackingDurationMs } from "@/lib/tracking-config";
 
 type ShipmentRow = {
   id: string;
@@ -229,22 +230,7 @@ async function loadShipments(search = "") {
     [result.rows.map((row) => row.id)]
   );
 
-  const shipments = mapRows(result.rows, eventResult.rows);
-
-  await Promise.all(
-    shipments.map((shipment) =>
-      syncShipmentCheckpoints({
-        resi: shipment.id,
-        originCity: shipment.originCity || "Kota Asal",
-        destinationCity: shipment.destinationCity || "Kota Tujuan",
-        shipmentStatus: shipment.shipment,
-        waktuBerangkat: shipment.waktuBerangkat,
-        durasiEstimasiMs: shipment.durasiEstimasiMs
-      })
-    )
-  );
-
-  return shipments;
+  return mapRows(result.rows, eventResult.rows);
 }
 
 function generateResi() {
@@ -277,12 +263,15 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const body = await request.json();
   const resiCode = generateResi();
-  const client = await pool.connect();
+  const serviceCode = String(body.service || "").toUpperCase() === "EKSPRES" ? "EKSPRES" : "REGULER";
+  const durasiEstimasiMs =
+    body.durasiEstimasiMs != null
+      ? parseInt(body.durasiEstimasiMs)
+      : getDemoTrackingDurationMs(serviceCode);
+  const estimatedArrivalAt = new Date(Date.now() + durasiEstimasiMs);
 
   try {
-    await client.query("BEGIN");
-
-    const customer = await client.query<{ id: string }>(
+    const customer = await pool.query<{ id: string }>(
       `
         INSERT INTO shipin_users (full_name, email, phone, role, password_hash)
         VALUES ($1, $2, $3, 'CUSTOMER', 'created_from_admin_cruds')
@@ -295,7 +284,7 @@ export async function POST(request: NextRequest) {
       ]
     );
 
-    const originAddress = await client.query<{ id: string }>(
+    const originAddress = await pool.query<{ id: string }>(
       `
         INSERT INTO shipin_addresses (user_id, label, city, province, postal_code, detail_address, is_primary)
         VALUES ($1, 'Alamat Pengirim', $2, $3, $4, $5, true)
@@ -310,7 +299,7 @@ export async function POST(request: NextRequest) {
       ]
     );
 
-    const destinationAddress = await client.query<{ id: string }>(
+    const destinationAddress = await pool.query<{ id: string }>(
       `
         INSERT INTO shipin_addresses (user_id, label, city, province, postal_code, detail_address, is_primary)
         VALUES ($1, 'Alamat Penerima', $2, $3, $4, $5, false)
@@ -325,24 +314,24 @@ export async function POST(request: NextRequest) {
       ]
     );
 
-    const originHub = await client.query<{ id: number }>(
+    const originHub = await pool.query<{ id: number }>(
       "SELECT id FROM shipin_hubs ORDER BY CASE WHEN city ILIKE $1 THEN 0 ELSE 1 END, id LIMIT 1",
       [`%${body.originCity || ""}%`]
     );
-    const destinationHub = await client.query<{ id: number }>(
+    const destinationHub = await pool.query<{ id: number }>(
       "SELECT id FROM shipin_hubs ORDER BY CASE WHEN city ILIKE $1 THEN 0 ELSE 1 END, id LIMIT 1",
       [`%${body.destinationCity || ""}%`]
     );
     const vehicleId =
       Number(body.vehicleId) ||
       (
-        await client.query<{ id: number }>(
+        await pool.query<{ id: number }>(
           "SELECT id FROM shipin_vehicles WHERE vehicle_status = 'AKTIF' ORDER BY id LIMIT 1"
         )
       ).rows[0]?.id;
 
     const serviceId = serviceIdFromType(body.deliveryType || body.service || "BIASA");
-    const shipment = await client.query<{ id: string }>(
+    const shipment = await pool.query<{ id: string }>(
       `
         INSERT INTO shipin_shipments (
           resi_code, customer_id, service_id, origin_address_id, destination_address_id,
@@ -356,8 +345,8 @@ export async function POST(request: NextRequest) {
           $1, $2, $3, $4, $5,
           $6, $7, $8, $9, $10,
           $11, $12, 'DIPROSES', $13, $14, $15, $16,
-          $17, $18, 'LUNAS', 'DIJADWALKAN', NOW() + INTERVAL '3 days',
-          $19, $20, $21, $22, $23, $24
+          $17, $18, 'LUNAS', 'DIJADWALKAN', $19,
+          $20, $21, $22, $23, $24, $25
         )
         RETURNING id
       `,
@@ -380,16 +369,17 @@ export async function POST(request: NextRequest) {
         Number(body.widthCm) || 0,
         Number(body.heightCm) || 0,
         Number(body.totalAmount) || 0,
+        estimatedArrivalAt.toISOString(),
         body.originLat != null ? parseFloat(body.originLat) : null,
         body.originLng != null ? parseFloat(body.originLng) : null,
         body.destinationLat != null ? parseFloat(body.destinationLat) : null,
         body.destinationLng != null ? parseFloat(body.destinationLng) : null,
         body.waktuBerangkat != null ? parseInt(body.waktuBerangkat) : null,
-        body.durasiEstimasiMs != null ? parseInt(body.durasiEstimasiMs) : null
+        durasiEstimasiMs
       ]
     );
 
-    await client.query(
+    await pool.query(
       `
         INSERT INTO shipin_payments (shipment_id, invoice_number, payment_method, amount, payment_status, paid_at)
         VALUES ($1, $2, 'QRIS', $3, 'LUNAS', NOW())
@@ -397,7 +387,7 @@ export async function POST(request: NextRequest) {
       [shipment.rows[0].id, `INV-${resiCode.replace("-ID", "")}`, Number(body.totalAmount) || 0]
     );
 
-    await client.query(
+    await pool.query(
       `
         INSERT INTO shipin_tracking_events (shipment_id, event_status, description, location_label, lat, lng, occurred_at)
         VALUES ($1, 'Pesanan diterima', 'Data cargo berhasil dibuat dan masuk database.', $2, NULL, NULL, NOW())
@@ -405,12 +395,10 @@ export async function POST(request: NextRequest) {
       [shipment.rows[0].id, body.originCity || "Hub Asal"]
     );
 
-    await client.query("COMMIT");
-
     await addCheckpoint(
       resiCode,
       CHECKPOINT_STATUS.PESANAN_DITERIMA,
-      "Pesanan berhasil dibuat dan进来了 sistem SHIPIN GO.",
+      "Pesanan berhasil dibuat dan masuk ke sistem SHIPIN GO.",
       body.originCity || "Kota Asal"
     );
 
@@ -420,7 +408,7 @@ export async function POST(request: NextRequest) {
       destinationCity: body.destinationCity || "Kota Tujuan",
       shipmentStatus: "DIJADWALKAN",
       waktuBerangkat: body.waktuBerangkat ?? null,
-      durasiEstimasiMs: body.durasiEstimasiMs ?? null
+      durasiEstimasiMs
     });
 
     await pool.query(
@@ -440,15 +428,20 @@ export async function POST(request: NextRequest) {
       ]
     );
 
-    const shipments = await loadShipments(resiCode);
-    return NextResponse.json({ shipment: shipments[0] }, { status: 201 });
+    return NextResponse.json(
+      {
+        shipment: {
+          id: resiCode,
+          total: Number(body.totalAmount) || 0
+        }
+      },
+      { status: 201 }
+    );
   } catch (error) {
-    await client.query("ROLLBACK");
     return NextResponse.json(
       { message: error instanceof Error ? error.message : "Gagal membuat pengiriman." },
       { status: 500 }
     );
-  } finally {
-    client.release();
   }
 }
+

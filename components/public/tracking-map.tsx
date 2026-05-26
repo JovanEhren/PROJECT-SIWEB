@@ -155,6 +155,7 @@ export function TrackingMap({
   zoom = 7,
   scrollWheelZoom = false
 }: TrackingMapProps) {
+  const isSimpleLocationMode = Boolean(latest && !origin && !destination);
   const [, forceUpdate] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -184,14 +185,16 @@ export function TrackingMap({
 
   // Update every 2 seconds for smooth animation
   useEffect(() => {
-    intervalRef.current = setInterval(() => {
-      forceUpdate((n) => n + 1);
-    }, 2000);
+    if (!isSimpleLocationMode) {
+      intervalRef.current = setInterval(() => {
+        forceUpdate((n) => n + 1);
+      }, 2000);
+    }
 
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, []);
+  }, [isSimpleLocationMode]);
 
   // ---- ETA text ----
   const etaText = useMemo<string>(() => {
@@ -248,7 +251,13 @@ export function TrackingMap({
   return (
     <div className="relative" style={{ minHeight: heightClassName }}>
       <MapContainer
-        center={origin ? [origin.lat, origin.lng] : [-2.5, 118]}
+        center={
+          origin
+            ? [origin.lat, origin.lng]
+            : latest
+              ? [latest.lat, latest.lng]
+              : [-2.5, 118]
+        }
         zoom={zoom}
         scrollWheelZoom={scrollWheelZoom}
         className={`${heightClassName} w-full`}
@@ -259,7 +268,7 @@ export function TrackingMap({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
-        <AutoBounds origin={origin} destination={destination} latest={animatedPos} />
+        <AutoBounds origin={origin} destination={destination} latest={animatedPos || latest} />
 
         {/* Origin Marker */}
         {origin && (
@@ -329,80 +338,80 @@ export function TrackingMap({
         )}
       </MapContainer>
 
-      {/* ---- ETA Overlay Card (Top Left) ---- */}
-      <div className="absolute top-3 left-3 z-[500] bg-white/95 backdrop-blur-sm rounded-2xl px-4 py-3 shadow-xl border border-[#e5ebe5] min-w-[160px] pointer-events-none">
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-full bg-orange-100 flex items-center justify-center shrink-0">
-            <svg viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth="2" width="18" height="18">
-              <circle cx="12" cy="12" r="10"/>
-              <path d="M12 6v6l4 2"/>
-            </svg>
-          </div>
-          <div>
-            <p className="text-[9px] font-extrabold uppercase tracking-widest text-[#9ca39f] leading-none">
-              Estimasi Tiba
-            </p>
-            <p className="text-[15px] font-extrabold text-[#f97316] leading-tight">
-              {etaText}
-            </p>
-          </div>
-        </div>
+      {!isSimpleLocationMode ? (
+        <>
+          <div className="absolute top-3 left-3 z-[500] min-w-[160px] rounded-2xl border border-[#e5ebe5] bg-white/95 px-4 py-3 shadow-xl backdrop-blur-sm pointer-events-none">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-orange-100">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth="2" width="18" height="18">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M12 6v6l4 2"/>
+                </svg>
+              </div>
+              <div>
+                <p className="text-[9px] font-extrabold uppercase tracking-widest text-[#9ca39f] leading-none">
+                  Estimasi Tiba
+                </p>
+                <p className="text-[15px] font-extrabold leading-tight text-[#f97316]">
+                  {etaText}
+                </p>
+              </div>
+            </div>
 
-        {/* Progress bar */}
-        <div className="mt-2.5">
-          <div className="flex justify-between text-[9px] font-bold text-[#9ca39f] mb-1">
-            <span>Awal</span>
-            <span className="text-orange-500">{distPercent}%</span>
-            <span>Tujuan</span>
+            <div className="mt-2.5">
+              <div className="mb-1 flex justify-between text-[9px] font-bold text-[#9ca39f]">
+                <span>Awal</span>
+                <span className="text-orange-500">{distPercent}%</span>
+                <span>Tujuan</span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-[#e5ebe5]">
+                <div
+                  className="h-full rounded-full transition-all duration-1000 ease-out"
+                  style={{
+                    width: `${distPercent}%`,
+                    background: distPercent >= 100
+                      ? "linear-gradient(90deg, #22c55e, #16a34a)"
+                      : "linear-gradient(90deg, #f97316, #fb923c)"
+                  }}
+                />
+              </div>
+            </div>
           </div>
-          <div className="h-2 rounded-full bg-[#e5ebe5] overflow-hidden">
-            <div
-              className="h-full rounded-full transition-all duration-1000 ease-out"
-              style={{
-                width: `${distPercent}%`,
-                background: distPercent >= 100
-                  ? "linear-gradient(90deg, #22c55e, #16a34a)"
-                  : "linear-gradient(90deg, #f97316, #fb923c)"
-              }}
-            />
-          </div>
-        </div>
-      </div>
 
-      {/* ---- Legend Card (Bottom Right) ---- */}
-      <div className="absolute bottom-3 right-3 z-[1000] bg-white/95 backdrop-blur-sm rounded-2xl px-3 py-2.5 shadow-xl border border-[#e5ebe5]">
-        <p className="text-[9px] font-extrabold uppercase tracking-widest text-[#9ca39f] mb-2">Legenda</p>
-        <div className="flex items-center gap-2 mb-1.5">
-          <div className="w-4 h-5 bg-blue-600 rounded-sm shadow-sm flex items-center justify-center">
-            <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
+          <div className="absolute bottom-3 right-3 z-[1000] rounded-2xl border border-[#e5ebe5] bg-white/95 px-3 py-2.5 shadow-xl backdrop-blur-sm">
+            <p className="mb-2 text-[9px] font-extrabold uppercase tracking-widest text-[#9ca39f]">Legenda</p>
+            <div className="mb-1.5 flex items-center gap-2">
+              <div className="flex h-5 w-4 items-center justify-center rounded-sm bg-blue-600 shadow-sm">
+                <div className="h-1.5 w-1.5 rounded-full bg-white"></div>
+              </div>
+              <span className="text-[11px] font-semibold text-[#475569]">Titik Awal</span>
+            </div>
+            <div className="mb-1.5 flex items-center gap-2">
+              <div className="relative flex h-5 w-4 items-center justify-center rounded-sm bg-orange-500 shadow-sm">
+                <div className="h-1.5 w-1.5 rounded-full bg-white"></div>
+              </div>
+              <span className="text-[11px] font-semibold text-[#475569]">Lokasi Terkini</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="flex h-5 w-4 items-center justify-center rounded-sm bg-green-600 shadow-sm">
+                <div className="h-1.5 w-1.5 rounded-full bg-white"></div>
+              </div>
+              <span className="text-[11px] font-semibold text-[#475569]">Tujuan</span>
+            </div>
           </div>
-          <span className="text-[11px] font-semibold text-[#475569]">Titik Awal</span>
-        </div>
-        <div className="flex items-center gap-2 mb-1.5">
-          <div className="w-4 h-5 bg-orange-500 rounded-sm shadow-sm flex items-center justify-center relative">
-            <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
-          </div>
-          <span className="text-[11px] font-semibold text-[#475569]">Lokasi Terkini</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-5 bg-green-600 rounded-sm shadow-sm flex items-center justify-center">
-            <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
-          </div>
-          <span className="text-[11px] font-semibold text-[#475569]">Tujuan</span>
-        </div>
-      </div>
 
-      {/* ---- Route line legend ---- */}
-      <div className="absolute bottom-3 left-3 z-[1000] bg-white/95 backdrop-blur-sm rounded-2xl px-3 py-2 shadow-xl border border-[#e5ebe5]">
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-0.5 bg-orange-500 rounded-full"></div>
-          <span className="text-[10px] font-semibold text-[#475569]">Sudah ditempuh</span>
-        </div>
-        <div className="flex items-center gap-2 mt-1">
-          <div className="w-6 h-0.5 bg-[#94a3b8] rounded-full" style={{ borderStyle: "dashed", borderWidth: "0 0 2px 0", borderImage: "repeating-linear-gradient(90deg, #94a3b8 0, #94a3b8 4px, transparent 4px, transparent 8px) 1" }}></div>
-          <span className="text-[10px] font-semibold text-[#475569]">Belum ditempuh</span>
-        </div>
-      </div>
+          <div className="absolute bottom-3 left-3 z-[1000] rounded-2xl border border-[#e5ebe5] bg-white/95 px-3 py-2 shadow-xl backdrop-blur-sm">
+            <div className="flex items-center gap-2">
+              <div className="h-0.5 w-6 rounded-full bg-orange-500"></div>
+              <span className="text-[10px] font-semibold text-[#475569]">Sudah ditempuh</span>
+            </div>
+            <div className="mt-1 flex items-center gap-2">
+              <div className="h-0.5 w-6 rounded-full bg-[#94a3b8]" style={{ borderStyle: "dashed", borderWidth: "0 0 2px 0", borderImage: "repeating-linear-gradient(90deg, #94a3b8 0, #94a3b8 4px, transparent 4px, transparent 8px) 1" }}></div>
+              <span className="text-[10px] font-semibold text-[#475569]">Belum ditempuh</span>
+            </div>
+          </div>
+        </>
+      ) : null}
     </div>
   );
 }

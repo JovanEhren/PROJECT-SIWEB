@@ -71,6 +71,12 @@ function toMillis(value: string | null) {
   return value ? new Date(value).getTime() : undefined;
 }
 
+function toNumber(value: string | null) {
+  if (!value) return null;
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : null;
+}
+
 function formatDate(value: string) {
   return new Date(value).toLocaleDateString("id-ID", {
     day: "2-digit",
@@ -87,8 +93,8 @@ function mapShipment(row: ShipmentRow, events: TrackingRow[]) {
       status: event.event_status,
       description: event.description,
       locationLabel: event.location_label,
-      lat: Number(event.lat || 0),
-      lng: Number(event.lng || 0),
+      lat: event.lat != null ? Number(event.lat) : null,
+      lng: event.lng != null ? Number(event.lng) : null,
       occurredAt: new Date(event.occurred_at).getTime()
     }));
   const latest = trackingEvents[trackingEvents.length - 1];
@@ -137,11 +143,33 @@ function mapShipment(row: ShipmentRow, events: TrackingRow[]) {
     waktuBerangkat: row.waktu_berangkat ? parseInt(row.waktu_berangkat) : null,
     durasiEstimasiMs: row.durasi_estimasi_ms ? parseInt(row.durasi_estimasi_ms) : null,
     latestLocationLabel: latest?.locationLabel,
-    latestLat: latest?.lat,
-    latestLng: latest?.lng,
+    latestLat: latest?.lat ?? undefined,
+    latestLng: latest?.lng ?? undefined,
     trackingEvents,
     lastTrackingUpdateAt: latest?.occurredAt
   };
+}
+
+function getSyncedRowSnapshot(row: ShipmentRow) {
+  const waktuBerangkat = toNumber(row.waktu_berangkat);
+  const durasiEstimasiMs = toNumber(row.durasi_estimasi_ms);
+
+  if (
+    row.shipment_status !== "SAMPAI" &&
+    waktuBerangkat &&
+    durasiEstimasiMs &&
+    durasiEstimasiMs > 0 &&
+    Date.now() - waktuBerangkat >= durasiEstimasiMs
+  ) {
+    return {
+      ...row,
+      shipment_status: "SAMPAI" as const,
+      item_status: "SELESAI",
+      delivered_at: row.delivered_at || new Date().toISOString()
+    };
+  }
+
+  return row;
 }
 
 export async function GET(request: NextRequest) {
@@ -219,60 +247,6 @@ export async function GET(request: NextRequest) {
       durasiEstimasiMs: row.durasi_estimasi_ms
     });
 
-    const refreshedShipment = await pool.query<ShipmentRow>(
-      `
-        SELECT
-          s.id,
-          s.resi_code,
-          c.full_name AS sender_name,
-          c.phone AS sender_phone,
-          s.receiver_name,
-          s.receiver_phone,
-          oa.city AS origin_city,
-          oa.province AS origin_province,
-          oa.detail_address AS origin_detail,
-          da.city AS destination_city,
-          da.province AS destination_province,
-          da.detail_address AS destination_detail,
-          s.package_type,
-          s.item_status,
-          s.item_note,
-          s.weight_kg,
-          s.length_cm,
-          s.width_cm,
-          s.height_cm,
-          s.total_amount,
-          s.payment_status,
-          s.shipment_status,
-          sv.code AS service_code,
-          sv.display_name AS service_name,
-          v.id AS vehicle_id,
-          v.vehicle_name,
-          v.vehicle_type,
-          v.plate_number,
-          v.capacity_kg,
-          v.vehicle_status,
-          s.created_at,
-          s.estimated_arrival_at,
-          s.delivered_at,
-          s.koordinat_asal_lat,
-          s.koordinat_asal_lng,
-          s.koordinat_tujuan_lat,
-          s.koordinat_tujuan_lng,
-          s.waktu_berangkat,
-          s.durasi_estimasi_ms
-        FROM shipin_shipments s
-        JOIN shipin_users c ON c.id = s.customer_id
-        JOIN shipin_addresses oa ON oa.id = s.origin_address_id
-        JOIN shipin_addresses da ON da.id = s.destination_address_id
-        JOIN shipin_shipping_services sv ON sv.id = s.service_id
-        LEFT JOIN shipin_vehicles v ON v.id = s.vehicle_id
-        WHERE s.resi_code = $1
-        LIMIT 1
-      `,
-      [resi]
-    );
-
     const eventResult = await pool.query<TrackingRow>(
       `
         SELECT id::text, shipment_id::text, event_status, description, location_label, lat, lng, occurred_at
@@ -280,10 +254,10 @@ export async function GET(request: NextRequest) {
         WHERE shipment_id = $1::uuid
         ORDER BY occurred_at ASC
       `,
-      [refreshedShipment.rows[0].id]
+      [row.id]
     );
 
-    const shipment = mapShipment(refreshedShipment.rows[0], eventResult.rows);
+    const shipment = mapShipment(getSyncedRowSnapshot(row), eventResult.rows);
     const checkpoints = await getCheckpointsByResi(resi);
 
     return NextResponse.json({ shipment, checkpoints });

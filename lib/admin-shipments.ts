@@ -536,9 +536,19 @@ export function refreshTrackingProgress() {
 }
 
 async function parseJsonResponse<T>(response: Response): Promise<T> {
-  const data = await response.json();
+  const raw = await response.text();
+  let data: unknown = null;
+
+  if (raw) {
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      data = { message: raw.slice(0, 180) || "Respons server tidak valid." };
+    }
+  }
+
   if (!response.ok) {
-    throw new Error(data?.message || "Request database gagal.");
+    throw new Error((data as { message?: string } | null)?.message || "Request database gagal.");
   }
   return data as T;
 }
@@ -554,14 +564,16 @@ export async function fetchShipmentsFromDatabase(search = "") {
 
 export async function runProgressCheck() {
   const response = await fetch("/api/cek-progress", {
-    cache: "no-store"
+    cache: "no-store",
+    signal: AbortSignal.timeout(8000)
   });
   return parseJsonResponse<{ ok: boolean; checked: number; updated: number }>(response);
 }
 
 export async function fetchTrackingByResi(resi: string) {
   const response = await fetch(`/api/lacak?resi=${encodeURIComponent(resi)}`, {
-    cache: "no-store"
+    cache: "no-store",
+    signal: AbortSignal.timeout(8000)
   });
   return parseJsonResponse<{
     shipment: ShipmentRecord | null;
@@ -570,7 +582,10 @@ export async function fetchTrackingByResi(resi: string) {
 }
 
 export async function fetchVehiclesFromDatabase() {
-  const response = await fetch("/api/vehicles", { cache: "no-store" });
+  const response = await fetch("/api/vehicles", {
+    cache: "no-store",
+    signal: AbortSignal.timeout(8000)
+  });
   const data = await parseJsonResponse<{ vehicles: VehicleOption[] }>(response);
   return data.vehicles;
 }
@@ -579,6 +594,7 @@ export async function createShipmentInDatabase(payload: CreateShipmentPayload) {
   const response = await fetch("/api/shipments", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    signal: AbortSignal.timeout(15000),
     body: JSON.stringify({
       senderName: payload.senderName,
       senderPhone: payload.senderPhone,
@@ -626,6 +642,7 @@ export async function updateShipmentInDatabase(id: string, patch: Partial<Shipme
   const response = await fetch(`/api/shipments/${encodeURIComponent(id)}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
+    signal: AbortSignal.timeout(15000),
     body: JSON.stringify(patch)
   });
   await parseJsonResponse<{ ok: boolean }>(response);
@@ -634,7 +651,8 @@ export async function updateShipmentInDatabase(id: string, patch: Partial<Shipme
 
 export async function deleteShipmentFromDatabase(id: string) {
   const response = await fetch(`/api/shipments/${encodeURIComponent(id)}`, {
-    method: "DELETE"
+    method: "DELETE",
+    signal: AbortSignal.timeout(15000)
   });
   await parseJsonResponse<{ ok: boolean }>(response);
   return fetchShipmentsFromDatabase();
@@ -674,7 +692,8 @@ export async function geocodeAddress(address: string): Promise<{ lat: number; ln
   try {
     const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1&accept-language=id`;
     const response = await fetch(url, {
-      headers: { "User-Agent": "SHIPINGO/1.0" }
+      headers: { "User-Agent": "SHIPINGO/1.0" },
+      signal: AbortSignal.timeout(3000)
     });
     if (!response.ok) return null;
     const results = await response.json();

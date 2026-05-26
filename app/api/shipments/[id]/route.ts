@@ -17,13 +17,9 @@ function toDbPaymentStatus(status?: string) {
 export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
   const body = await request.json();
-  const client = await pool.connect();
 
   try {
-    await client.query("BEGIN");
-
-    // Get shipment info for cities before update
-    const shipmentInfo = await client.query<{ origin_city: string; destination_city: string }>(
+    const shipmentInfo = await pool.query<{ origin_city: string; destination_city: string }>(
       `SELECT oa.city as origin_city, da.city as destination_city
        FROM shipin_shipments s
        JOIN shipin_addresses oa ON oa.id = s.origin_address_id
@@ -32,7 +28,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       [id]
     );
 
-    const result = await client.query<{ id: string }>(
+    const result = await pool.query<{ id: string }>(
       `
         UPDATE shipin_shipments
         SET
@@ -56,7 +52,6 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     );
 
     if (!result.rows[0]) {
-      await client.query("ROLLBACK");
       return NextResponse.json({ message: "Data pengiriman tidak ditemukan." }, { status: 404 });
     }
 
@@ -90,8 +85,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       }
     }
 
-    // Update payment - no need to wait for vehicle update if it exists
-    const paymentPromise = client.query(
+    await pool.query(
       `
         UPDATE shipin_payments
         SET
@@ -107,43 +101,35 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       ]
     );
 
-    // Update vehicle if needed (parallel with payment update)
-    const vehiclePromise = body.vehiclePatch?.id
-      ? client.query(
-          `
-            UPDATE shipin_vehicles
-            SET
-              vehicle_name = COALESCE($2, vehicle_name),
-              vehicle_type = COALESCE($3, vehicle_type),
-              plate_number = COALESCE($4, plate_number),
-              capacity_kg = COALESCE($5::numeric, capacity_kg),
-              vehicle_status = COALESCE($6, vehicle_status)
-            WHERE id = $1
-          `,
-          [
-            Number(body.vehiclePatch.id),
-            body.vehiclePatch.vehicleName || null,
-            body.vehiclePatch.vehicleType || null,
-            body.vehiclePatch.plateNumber || null,
-            body.vehiclePatch.capacityKg != null ? Number(body.vehiclePatch.capacityKg) : null,
-            body.vehiclePatch.vehicleStatus || null
-          ]
-        )
-      : Promise.resolve();
+    if (body.vehiclePatch?.id) {
+      await pool.query(
+        `
+          UPDATE shipin_vehicles
+          SET
+            vehicle_name = COALESCE($2, vehicle_name),
+            vehicle_type = COALESCE($3, vehicle_type),
+            plate_number = COALESCE($4, plate_number),
+            capacity_kg = COALESCE($5::numeric, capacity_kg),
+            vehicle_status = COALESCE($6, vehicle_status)
+          WHERE id = $1
+        `,
+        [
+          Number(body.vehiclePatch.id),
+          body.vehiclePatch.vehicleName || null,
+          body.vehiclePatch.vehicleType || null,
+          body.vehiclePatch.plateNumber || null,
+          body.vehiclePatch.capacityKg != null ? Number(body.vehiclePatch.capacityKg) : null,
+          body.vehiclePatch.vehicleStatus || null
+        ]
+      );
+    }
 
-    // Wait for payment and vehicle updates in parallel
-    await Promise.all([paymentPromise, vehiclePromise]);
-
-    await client.query("COMMIT");
     return NextResponse.json({ ok: true });
   } catch (error) {
-    await client.query("ROLLBACK");
     return NextResponse.json(
       { message: error instanceof Error ? error.message : "Gagal memperbarui data." },
       { status: 500 }
     );
-  } finally {
-    client.release();
   }
 }
 

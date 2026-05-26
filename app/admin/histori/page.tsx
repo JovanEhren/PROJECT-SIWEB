@@ -16,6 +16,7 @@ import {
   updateShipmentInDatabase,
   VehicleOption
 } from "@/lib/admin-shipments";
+import { ADMIN_HISTORY_REFRESH_INTERVAL_MS } from "@/lib/tracking-config";
 
 const TrackingMap = dynamic(
   () => import("@/components/public/tracking-map").then((mod) => mod.TrackingMap),
@@ -80,6 +81,18 @@ function AdminHistoriContent() {
   const [vehicles, setVehicles] = useState<VehicleOption[]>([]);
   const [loading, setLoading] = useState(true);
 
+  async function hydrateShipments() {
+    const current = await fetchShipmentsFromDatabase();
+    setRows(current);
+    setSelectedId((previousId) => {
+      if (previousId && current.some((row) => row.id === previousId)) {
+        return previousId;
+      }
+
+      return current[0]?.id ?? null;
+    });
+  }
+
   useEffect(() => {
     async function hydrate() {
       try {
@@ -100,6 +113,21 @@ function AdminHistoriContent() {
     }
 
     hydrate();
+  }, []);
+
+  useEffect(() => {
+    const interval = window.setInterval(async () => {
+      if (document.hidden) return;
+
+      try {
+        await runProgressCheck().catch(() => null);
+        await hydrateShipments();
+      } catch {
+        // Keep the current admin view stable if background sync fails.
+      }
+    }, ADMIN_HISTORY_REFRESH_INTERVAL_MS);
+
+    return () => window.clearInterval(interval);
   }, []);
 
   const filteredRows = useMemo(() => {
