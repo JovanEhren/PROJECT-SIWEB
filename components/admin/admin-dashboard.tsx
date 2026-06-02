@@ -50,11 +50,10 @@ const ITEMS_PER_PAGE = 5;
 function formatCurrency(amount: number) {
   return `Rp ${amount.toLocaleString("id-ID")}`;
 }
-
 function statusPill(status: ShipmentStatus) {
   if (status === "Selesai") return "bg-[#ddf8dc] text-[#1a8f37]";
   if (status === "Pending") return "bg-[#ffe7de] text-[#d26b3f]";
-  return "bg-[#dff5dc] text-[#2d9a49]";
+  return "bg-[#dce8fb] text-[#2563eb]"; 
 }
 
 function mapHistoryShipmentStatus(status: HistoryShipmentStatus): ShipmentStatus {
