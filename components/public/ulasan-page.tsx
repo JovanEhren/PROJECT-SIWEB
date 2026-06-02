@@ -3,16 +3,19 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { StarIcon } from "@/components/icons";
+import { PublicFooter } from "@/components/public/footer";
 import {
-  createReview,
-  deleteReview,
-  loadReviews,
+  createReviewInDatabase,
+  deleteReviewFromDatabase,
+  fetchReviewsFromDatabase,
   ReviewItem,
-  updateReview
+  updateReviewInDatabase
 } from "@/lib/admin-reviews";
+import { PublicToast } from "@/components/ui/public-toast";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 
 const PUBLIC_OWNED_REVIEW_KEY = "shipin_public_owned_reviews_v1";
+const PUBLIC_REVIEW_TOKEN_KEY = "shipin_public_review_tokens_v1";
 const ITEMS_PER_PAGE = 3;
 
 function ReviewStars({ stars }: { stars: number }) {
@@ -34,24 +37,54 @@ export function UlasanPage() {
   const [query, setQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [ownedReviewIds, setOwnedReviewIds] = useState<string[]>([]);
+  const [ownedReviewTokens, setOwnedReviewTokens] = useState<Record<string, string>>({});
   const [name, setName] = useState("");
   const [text, setText] = useState("");
-  const [stars, setStars] = useState(5);
+  const [stars, setStars] = useState(0);
   const [message, setMessage] = useState("");
+  const [messageTone, setMessageTone] = useState<"error" | "success">("success");
   const [editingReviewId, setEditingReviewId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
   const [editingText, setEditingText] = useState("");
   const [editingStars, setEditingStars] = useState(5);
+  const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [toastMessage, setToastMessage] = useState("");
 
   useEffect(() => {
-    setRows(loadReviews());
+    let active = true;
+
+    async function hydrate() {
+      try {
+        const reviews = await fetchReviewsFromDatabase(false);
+        if (!active) return;
+        setRows(reviews);
+      } catch (error) {
+        if (!active) return;
+        setToastMessage(error instanceof Error ? error.message : "Gagal mengirim ulasan, silakan coba lagi");
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+
+    void hydrate();
     try {
       const raw = window.localStorage.getItem(PUBLIC_OWNED_REVIEW_KEY);
       const parsed = raw ? (JSON.parse(raw) as string[]) : [];
       setOwnedReviewIds(Array.isArray(parsed) ? parsed : []);
+
+      const tokenRaw = window.localStorage.getItem(PUBLIC_REVIEW_TOKEN_KEY);
+      const tokenParsed = tokenRaw ? (JSON.parse(tokenRaw) as Record<string, string>) : {};
+      setOwnedReviewTokens(tokenParsed && typeof tokenParsed === "object" ? tokenParsed : {});
     } catch {
       setOwnedReviewIds([]);
+      setOwnedReviewTokens({});
     }
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   const visibleRows = useMemo(() => rows.filter((row) => row.visible), [rows]);
@@ -93,25 +126,47 @@ export function UlasanPage() {
     return Number((total / visibleRows.length).toFixed(1));
   }, [visibleRows]);
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!name.trim() || !text.trim()) {
-      setMessage("Nama dan pesan ulasan wajib diisi.");
+
+    const nextErrors = {
+      name: !name.trim() ? "Nama tidak boleh kosong" : "",
+      text: !text.trim() ? "Ulasan tidak boleh kosong" : "",
+      stars: stars <= 0 ? "Pilih rating terlebih dahulu" : ""
+    };
+    setFieldErrors(nextErrors);
+
+    if (nextErrors.name || nextErrors.text || nextErrors.stars) {
+      setMessage("");
       return;
     }
-    const updated = createReview(name.trim(), text.trim(), stars);
-    setRows(updated);
-    setCurrentPage(1);
-    const createdId = updated[0]?.id;
-    if (createdId) {
+
+    setIsSubmitting(true);
+    try {
+      const created = await createReviewInDatabase(name.trim(), text.trim(), stars);
+      setRows((current) => [created.review, ...current]);
+      setCurrentPage(1);
+      const createdId = created.review.id;
       const nextOwnedIds = [createdId, ...ownedReviewIds];
+      const nextOwnedTokens = {
+        ...ownedReviewTokens,
+        [createdId]: created.reviewerToken
+      };
       setOwnedReviewIds(nextOwnedIds);
+      setOwnedReviewTokens(nextOwnedTokens);
       window.localStorage.setItem(PUBLIC_OWNED_REVIEW_KEY, JSON.stringify(nextOwnedIds));
+      window.localStorage.setItem(PUBLIC_REVIEW_TOKEN_KEY, JSON.stringify(nextOwnedTokens));
+      setName("");
+      setText("");
+      setStars(0);
+      setFieldErrors({});
+      setMessageTone("success");
+      setMessage("Ulasan berhasil dikirim. Terima kasih atas masukan Anda.");
+    } catch (error) {
+      setToastMessage(error instanceof Error ? error.message : "Gagal mengirim ulasan, silakan coba lagi");
+    } finally {
+      setIsSubmitting(false);
     }
-    setName("");
-    setText("");
-    setStars(5);
-    setMessage("Ulasan berhasil dikirim. Terima kasih atas masukan Anda.");
   }
 
   function handleStartEdit(review: ReviewItem) {
@@ -129,42 +184,55 @@ export function UlasanPage() {
     setEditingStars(5);
   }
 
-  function handleSaveEdit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSaveEdit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!editingReviewId) return;
     if (!editingName.trim() || !editingText.trim()) {
+      setMessageTone("error");
       setMessage("Nama dan pesan ulasan wajib diisi.");
       return;
     }
-    const updated = updateReview(editingReviewId, {
-      name: editingName.trim(),
-      stars: editingStars,
-      text: `"${editingText.trim()}"`,
-      initials:
-        editingName
-          .split(" ")
-          .filter(Boolean)
-          .slice(0, 2)
-          .map((part) => part[0]?.toUpperCase() ?? "")
-          .join("") || "US"
-    });
-    setRows(updated);
-    setCurrentPage(1);
-    handleCancelEdit();
-    setMessage("Ulasan berhasil diperbarui.");
+
+    setIsSubmitting(true);
+    try {
+      const updatedReview = await updateReviewInDatabase(editingReviewId, {
+        name: editingName.trim(),
+        stars: editingStars,
+        text: editingText.trim(),
+        reviewerToken: ownedReviewTokens[editingReviewId]
+      });
+      setRows((current) => current.map((review) => (review.id === editingReviewId ? updatedReview : review)));
+      setCurrentPage(1);
+      handleCancelEdit();
+      setMessageTone("success");
+      setMessage("Ulasan berhasil diperbarui.");
+    } catch (error) {
+      setToastMessage(error instanceof Error ? error.message : "Gagal mengirim ulasan, silakan coba lagi");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
-  function handleDeleteReview(id: string) {
-    const updated = deleteReview(id);
-    setRows(updated);
-    setCurrentPage(1);
-    const nextOwnedIds = ownedReviewIds.filter((item) => item !== id);
-    setOwnedReviewIds(nextOwnedIds);
-    window.localStorage.setItem(PUBLIC_OWNED_REVIEW_KEY, JSON.stringify(nextOwnedIds));
-    if (editingReviewId === id) {
-      handleCancelEdit();
+  async function handleDeleteReview(id: string) {
+    try {
+      await deleteReviewFromDatabase(id, ownedReviewTokens[id]);
+      setRows((current) => current.filter((review) => review.id !== id));
+      setCurrentPage(1);
+      const nextOwnedIds = ownedReviewIds.filter((item) => item !== id);
+      const nextOwnedTokens = { ...ownedReviewTokens };
+      delete nextOwnedTokens[id];
+      setOwnedReviewIds(nextOwnedIds);
+      setOwnedReviewTokens(nextOwnedTokens);
+      window.localStorage.setItem(PUBLIC_OWNED_REVIEW_KEY, JSON.stringify(nextOwnedIds));
+      window.localStorage.setItem(PUBLIC_REVIEW_TOKEN_KEY, JSON.stringify(nextOwnedTokens));
+      if (editingReviewId === id) {
+        handleCancelEdit();
+      }
+      setMessageTone("success");
+      setMessage("Ulasan berhasil dihapus.");
+    } catch (error) {
+      setToastMessage(error instanceof Error ? error.message : "Gagal mengirim ulasan, silakan coba lagi");
     }
-    setMessage("Ulasan berhasil dihapus.");
   }
 
   return (
@@ -179,8 +247,8 @@ export function UlasanPage() {
                 <span className="text-[#127840]"> SHIPIN GO ?</span>
               </h1>
               <p className="mt-3 max-w-[620px] text-[14px] leading-7 text-[#6e766f] sm:text-[15px]">
-                Kepercayaan Anda adalah prioritas kami. Kami bangga telah membantu ribuan
-                bisnis mengirimkan paket dengan aman dan tepat waktu ke seluruh penjuru negeri.
+                Kepercayaan Anda adalah prioritas kami. Kami bangga telah membantu ribuan bisnis
+                mengirimkan paket dengan aman dan tepat waktu ke seluruh penjuru negeri.
               </p>
             </div>
 
@@ -240,16 +308,18 @@ export function UlasanPage() {
               />
 
               <div className="mt-4 space-y-3">
-                {paginatedRows.length === 0 ? (
+                {loading ? (
+                  <div className="rounded-[16px] border border-dashed border-[#d7dfd7] bg-white px-4 py-6 text-center">
+                    <p className="text-[13px] font-semibold text-[#657068]">Memuat ulasan dari database...</p>
+                  </div>
+                ) : null}
+                {!loading && paginatedRows.length === 0 ? (
                   <div className="rounded-[16px] border border-dashed border-[#d7dfd7] bg-white px-4 py-6 text-center">
                     <p className="text-[13px] font-semibold text-[#657068]">Belum ada ulasan yang cocok.</p>
                   </div>
                 ) : null}
                 {paginatedRows.map((review) => (
-                  <article
-                    key={review.id}
-                    className="rounded-[16px] border border-[#e8ece7] bg-white px-4 py-3"
-                  >
+                  <article key={review.id} className="rounded-[16px] border border-[#e8ece7] bg-white px-4 py-3">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <p className="text-[18px] font-bold leading-none text-[#28342d]">{review.name}</p>
@@ -281,7 +351,9 @@ export function UlasanPage() {
               </div>
 
               <div className="mt-5 flex flex-col items-center gap-3 text-[12px] font-semibold text-[#657068] sm:flex-row sm:justify-between">
-                <p>Menampilkan {paginatedRows.length} dari {displayedRows.length} ulasan</p>
+                <p>
+                  Menampilkan {paginatedRows.length} dari {displayedRows.length} ulasan
+                </p>
                 <div className="flex items-center gap-1.5">
                   <button
                     type="button"
@@ -336,9 +408,7 @@ export function UlasanPage() {
 
               <form className="mt-4 space-y-3" onSubmit={editingReviewId ? handleSaveEdit : handleSubmit}>
                 <div>
-                  <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#49524c]">
-                    Beri Rating
-                  </p>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#49524c]">Beri Rating</p>
                   <div className="mt-1.5 flex gap-1.5">
                     {Array.from({ length: 5 }).map((_, index) => {
                       const value = index + 1;
@@ -346,7 +416,16 @@ export function UlasanPage() {
                         <button
                           type="button"
                           key={value}
-                          onClick={() => (editingReviewId ? setEditingStars(value) : setStars(value))}
+                          onClick={() => {
+                            if (editingReviewId) {
+                              setEditingStars(value);
+                              return;
+                            }
+                            setStars(value);
+                            if (fieldErrors.stars) {
+                              setFieldErrors((current) => ({ ...current, stars: "" }));
+                            }
+                          }}
                           className="text-[#0f8d50]"
                         >
                           <StarIcon
@@ -358,6 +437,9 @@ export function UlasanPage() {
                       );
                     })}
                   </div>
+                  {!editingReviewId && fieldErrors.stars ? (
+                    <p className="mt-2 text-[12px] font-medium text-[#b42318]">{fieldErrors.stars}</p>
+                  ) : null}
                 </div>
 
                 <div>
@@ -366,12 +448,33 @@ export function UlasanPage() {
                   </label>
                   <input
                     value={editingReviewId ? editingName : name}
-                    onChange={(event) =>
-                      editingReviewId ? setEditingName(event.target.value) : setName(event.target.value)
-                    }
+                    onChange={(event) => {
+                      if (editingReviewId) {
+                        setEditingName(event.target.value);
+                        return;
+                      }
+                      setName(event.target.value);
+                      if (fieldErrors.name) {
+                        setFieldErrors((current) => ({
+                          ...current,
+                          name: event.target.value.trim() ? "" : "Nama tidak boleh kosong"
+                        }));
+                      }
+                    }}
+                    onBlur={(event) => {
+                      if (!editingReviewId) {
+                        setFieldErrors((current) => ({
+                          ...current,
+                          name: event.target.value.trim() ? "" : "Nama tidak boleh kosong"
+                        }));
+                      }
+                    }}
                     className="mt-1.5 h-10 w-full rounded-[10px] border border-[#e0e6df] bg-[#f1f4ef] px-3 text-[13px] text-[#324039] outline-none"
                     placeholder="Masukkan nama Anda"
                   />
+                  {!editingReviewId && fieldErrors.name ? (
+                    <p className="mt-2 text-[12px] font-medium text-[#b42318]">{fieldErrors.name}</p>
+                  ) : null}
                 </div>
 
                 <div>
@@ -380,21 +483,43 @@ export function UlasanPage() {
                   </label>
                   <textarea
                     value={editingReviewId ? editingText : text}
-                    onChange={(event) =>
-                      editingReviewId ? setEditingText(event.target.value) : setText(event.target.value)
-                    }
+                    onChange={(event) => {
+                      if (editingReviewId) {
+                        setEditingText(event.target.value);
+                        return;
+                      }
+                      setText(event.target.value);
+                      if (fieldErrors.text) {
+                        setFieldErrors((current) => ({
+                          ...current,
+                          text: event.target.value.trim() ? "" : "Ulasan tidak boleh kosong"
+                        }));
+                      }
+                    }}
+                    onBlur={(event) => {
+                      if (!editingReviewId) {
+                        setFieldErrors((current) => ({
+                          ...current,
+                          text: event.target.value.trim() ? "" : "Ulasan tidak boleh kosong"
+                        }));
+                      }
+                    }}
                     rows={4}
                     className="mt-1.5 w-full resize-none rounded-[10px] border border-[#e0e6df] bg-[#f1f4ef] px-3 py-2.5 text-[13px] text-[#324039] outline-none"
                     placeholder="Ceritakan pengalaman Anda..."
                   />
+                  {!editingReviewId && fieldErrors.text ? (
+                    <p className="mt-2 text-[12px] font-medium text-[#b42318]">{fieldErrors.text}</p>
+                  ) : null}
                 </div>
 
                 <div className="flex items-center gap-2">
                   <button
                     type="submit"
+                    disabled={isSubmitting}
                     className="inline-flex h-10 w-full items-center justify-center rounded-full bg-gradient-to-r from-[#168049] to-[#12a662] text-[13px] font-semibold text-white shadow-[0_10px_20px_rgba(21,143,82,0.3)]"
                   >
-                    {editingReviewId ? "Simpan Perubahan" : "Kirim Ulasan"}
+                    {isSubmitting ? "Menyimpan..." : editingReviewId ? "Simpan Perubahan" : "Kirim Ulasan"}
                   </button>
                   {editingReviewId ? (
                     <button
@@ -408,7 +533,9 @@ export function UlasanPage() {
                 </div>
 
                 {message ? (
-                  <p className="text-[12px] font-medium text-[#1a7d45]">{message}</p>
+                  <p className={`text-[12px] font-medium ${messageTone === "error" ? "text-[#b42318]" : "text-[#1a7d45]"}`}>
+                    {message}
+                  </p>
                 ) : null}
               </form>
 
@@ -425,53 +552,11 @@ export function UlasanPage() {
               </div>
             </aside>
           </div>
-
         </div>
       </section>
 
-      <footer className="mt-8 bg-white/85">
-        <div className="shell py-12">
-          <div className="grid gap-10 border-b border-[#e8ebe4] pb-10 md:grid-cols-2 lg:grid-cols-[1.4fr_0.7fr_0.7fr]">
-            <div>
-              <p className="text-[18px] font-extrabold tracking-[-0.03em] text-shipin-deep">SHIPIN GO</p>
-              <p className="mt-5 max-w-[360px] text-[15px] leading-8 text-shipin-text">
-                Solusi logistik terdepan di Indonesia. Menghubungkan orang dan bisnis
-                melalui sistem pengiriman yang cerdas dan efisien.
-              </p>
-            </div>
-            <div>
-              <p className="text-[15px] font-bold text-shipin-ink">Perusahaan</p>
-              <ul className="mt-5 space-y-4 text-[15px] text-shipin-text">
-                <li>Tentang Kami</li>
-                <li>Karir</li>
-                <li>Kontak</li>
-              </ul>
-            </div>
-            <div>
-              <p className="text-[15px] font-bold text-shipin-ink">Dukungan</p>
-              <ul className="mt-5 space-y-4 text-[15px] text-shipin-text">
-                <li>Pusat Bantuan</li>
-                <li>Syarat &amp; Ketentuan</li>
-                <li>Kebijakan Privasi</li>
-              </ul>
-            </div>
-          </div>
-          <div className="flex flex-col gap-4 pt-7 text-[14px] text-shipin-text sm:flex-row sm:items-center sm:justify-between">
-            <p>© 2024 SHIPIN GO. Hak Cipta Dilindungi.</p>
-            <div className="flex gap-6">
-              <a href="https://www.instagram.com/" target="_blank" rel="noreferrer" className="hover:text-shipin-deep">
-                Instagram
-              </a>
-              <a href="https://www.linkedin.com/" target="_blank" rel="noreferrer" className="hover:text-shipin-deep">
-                LinkedIn
-              </a>
-              <a href="https://x.com/" target="_blank" rel="noreferrer" className="hover:text-shipin-deep">
-                Twitter
-              </a>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <PublicFooter />
+      {toastMessage ? <PublicToast message={toastMessage} /> : null}
     </main>
   );
 }

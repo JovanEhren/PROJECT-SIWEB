@@ -2,7 +2,12 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 
-import { deleteReview, loadReviews, ReviewItem, updateReview } from "@/lib/admin-reviews";
+import {
+  deleteReviewFromDatabase,
+  fetchReviewsFromDatabase,
+  ReviewItem,
+  updateReviewInDatabase
+} from "@/lib/admin-reviews";
 
 function RatingStars({ stars }: { stars: number }) {
   return (
@@ -31,9 +36,32 @@ function AdminUlasanContent() {
   const [query, setQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setReviews(loadReviews());
+    document.title = "Ulasan | SHIPIN GO Admin";
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    async function hydrate() {
+      try {
+        const rows = await fetchReviewsFromDatabase(true);
+        if (!active) return;
+        setReviews(rows);
+      } catch (error) {
+        if (!active) return;
+        setMessage(error instanceof Error ? error.message : "Gagal memuat ulasan.");
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+
+    void hydrate();
+    return () => {
+      active = false;
+    };
   }, []);
 
   const bars = useMemo(() => {
@@ -79,16 +107,24 @@ function AdminUlasanContent() {
     }
   }, [currentPage, totalPages]);
 
-  function handleToggleVisibility(id: string, visible: boolean) {
-    const updated = updateReview(id, { visible: !visible });
-    setReviews(updated);
-    setMessage("Status moderasi ulasan diperbarui.");
+  async function handleToggleVisibility(id: string, visible: boolean) {
+    try {
+      const updatedReview = await updateReviewInDatabase(id, { visible: !visible });
+      setReviews((current) => current.map((review) => (review.id === id ? updatedReview : review)));
+      setMessage("Status moderasi ulasan diperbarui.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Gagal memperbarui moderasi ulasan.");
+    }
   }
 
-  function handleDeleteReview(id: string) {
-    const updated = deleteReview(id);
-    setReviews(updated);
-    setMessage("Ulasan berhasil dihapus.");
+  async function handleDeleteReview(id: string) {
+    try {
+      await deleteReviewFromDatabase(id);
+      setReviews((current) => current.filter((review) => review.id !== id));
+      setMessage("Ulasan berhasil dihapus.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Gagal menghapus ulasan.");
+    }
   }
 
   return (
@@ -204,7 +240,12 @@ function AdminUlasanContent() {
             />
 
             <div className="mt-5 space-y-4">
-              {paginatedReviews.length === 0 ? (
+              {loading ? (
+                <div className="rounded-[24px] border border-dashed border-[#d7dfd7] bg-white px-6 py-8 text-center">
+                  <p className="text-[13px] font-semibold text-[#5f6d63]">Memuat ulasan dari database...</p>
+                </div>
+              ) : null}
+              {!loading && paginatedReviews.length === 0 ? (
                 <div className="rounded-[24px] border border-dashed border-[#d7dfd7] bg-white px-6 py-8 text-center">
                   <p className="text-[13px] font-semibold text-[#5f6d63]">Belum ada ulasan yang cocok.</p>
                 </div>

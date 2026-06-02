@@ -3,6 +3,8 @@
 import { useMemo, useState } from "react";
 
 import { BoltIcon, PackageIcon, SearchIcon, TruckIcon } from "@/components/icons";
+import { PublicFooter } from "@/components/public/footer";
+import { PublicToast } from "@/components/ui/public-toast";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { AREA_TREE, estimateShippingCost } from "@/lib/shipping-pricing";
@@ -67,6 +69,8 @@ export function CekOngkirPage() {
   const [selectedService, setSelectedService] = useState<ServiceType | null>(null);
   const [calculated, setCalculated] = useState(false);
   const [message, setMessage] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [toastMessage, setToastMessage] = useState("");
 
   const numericWeight = Number(weight || 0);
   const hasCoreData =
@@ -124,16 +128,65 @@ export function CekOngkirPage() {
 
   const selectedOption = pricedOptions.find((item) => item.key === selectedService) ?? null;
 
+  function validateOriginCity(value: string) {
+    if (!value.trim()) return "Kota asal tidak boleh kosong";
+    return "";
+  }
+
+  function validateDestinationCity(value: string) {
+    if (!value.trim()) return "Kota tujuan tidak boleh kosong";
+    return "";
+  }
+
+  function validateWeight(value: string) {
+    if (!value.trim()) return "Berat paket tidak boleh kosong";
+    const numeric = Number(value);
+    if (Number.isNaN(numeric)) return "Berat harus berupa angka";
+    if (numeric <= 0) return "Berat harus lebih dari 0";
+    return "";
+  }
+
+  function validateRequired(value: string, messageText: string) {
+    if (!value.trim()) return messageText;
+    return "";
+  }
+
+  function setFieldError(key: string, value: string) {
+    setFieldErrors((current) => ({
+      ...current,
+      [key]: value
+    }));
+  }
+
   function handleCalculate() {
-    if (!hasCoreData) {
+    const nextErrors = {
+      originCity: validateOriginCity(originCity),
+      destinationCity: validateDestinationCity(destinationCity),
+      originDetail: validateRequired(originDetail, "Alamat detail asal tidak boleh kosong"),
+      destinationDetail: validateRequired(destinationDetail, "Alamat detail tujuan tidak boleh kosong"),
+      weight: validateWeight(weight)
+    };
+
+    setFieldErrors(nextErrors);
+
+    if (Object.values(nextErrors).some(Boolean) || !hasCoreData) {
       setCalculated(false);
       setSelectedService(null);
-      setMessage("Lengkapi asal-tujuan, alamat detail, dan berat paket terlebih dahulu.");
+      setMessage("");
       return;
     }
-    setCalculated(true);
-    setSelectedService("reguler");
-    setMessage("Estimasi ongkir berhasil dihitung. Silakan pilih layanan.");
+
+    try {
+      setCalculated(true);
+      setSelectedService("reguler");
+      setToastMessage("");
+      setMessage("Estimasi ongkir berhasil dihitung. Silakan pilih layanan.");
+    } catch {
+      setCalculated(false);
+      setSelectedService(null);
+      setMessage("");
+      setToastMessage("Gagal menghitung ongkir, silakan coba lagi");
+    }
   }
 
   return (
@@ -189,8 +242,14 @@ export function CekOngkirPage() {
                     value={originCity}
                     options={originCities.map((item) => item.city)}
                     className="mt-0"
-                    onChange={setOriginCity}
+                    onChange={(value) => {
+                      setOriginCity(value);
+                      if (fieldErrors.originCity) setFieldError("originCity", validateOriginCity(value));
+                    }}
                   />
+                  {fieldErrors.originCity ? (
+                    <p className="mt-2 text-[12px] font-medium text-[#b42318]">{fieldErrors.originCity}</p>
+                  ) : null}
                 </div>
               </div>
 
@@ -225,8 +284,16 @@ export function CekOngkirPage() {
                     value={destinationCity}
                     options={destinationCities.map((item) => item.city)}
                     className="mt-0"
-                    onChange={setDestinationCity}
+                    onChange={(value) => {
+                      setDestinationCity(value);
+                      if (fieldErrors.destinationCity) {
+                        setFieldError("destinationCity", validateDestinationCity(value));
+                      }
+                    }}
                   />
+                  {fieldErrors.destinationCity ? (
+                    <p className="mt-2 text-[12px] font-medium text-[#b42318]">{fieldErrors.destinationCity}</p>
+                  ) : null}
                 </div>
               </div>
 
@@ -236,10 +303,19 @@ export function CekOngkirPage() {
                 </p>
                 <textarea
                   value={originDetail}
-                  onChange={(event) => setOriginDetail(event.target.value)}
+                  onChange={(event) => {
+                    setOriginDetail(event.target.value);
+                    if (fieldErrors.originDetail) {
+                      setFieldError("originDetail", validateRequired(event.target.value, "Alamat detail asal tidak boleh kosong"));
+                    }
+                  }}
+                  onBlur={(event) => setFieldError("originDetail", validateRequired(event.target.value, "Alamat detail asal tidak boleh kosong"))}
                   className="mt-2 h-[62px] w-full resize-none rounded-[10px] border border-[#e5e9e2] bg-[#f1f3ef] px-4 py-2 text-[13px] text-[#3f4a43] outline-none"
                   placeholder="Jalan, nomor, RT/RW, patokan"
                 />
+                {fieldErrors.originDetail ? (
+                  <p className="mt-2 text-[12px] font-medium text-[#b42318]">{fieldErrors.originDetail}</p>
+                ) : null}
               </div>
 
               <div>
@@ -248,10 +324,21 @@ export function CekOngkirPage() {
                 </p>
                 <textarea
                   value={destinationDetail}
-                  onChange={(event) => setDestinationDetail(event.target.value)}
+                  onChange={(event) => {
+                    setDestinationDetail(event.target.value);
+                    if (fieldErrors.destinationDetail) {
+                      setFieldError("destinationDetail", validateRequired(event.target.value, "Alamat detail tujuan tidak boleh kosong"));
+                    }
+                  }}
+                  onBlur={(event) =>
+                    setFieldError("destinationDetail", validateRequired(event.target.value, "Alamat detail tujuan tidak boleh kosong"))
+                  }
                   className="mt-2 h-[62px] w-full resize-none rounded-[10px] border border-[#e5e9e2] bg-[#f1f3ef] px-4 py-2 text-[13px] text-[#3f4a43] outline-none"
                   placeholder="Jalan, nomor, RT/RW, patokan"
                 />
+                {fieldErrors.destinationDetail ? (
+                  <p className="mt-2 text-[12px] font-medium text-[#b42318]">{fieldErrors.destinationDetail}</p>
+                ) : null}
               </div>
 
               <div>
@@ -260,34 +347,47 @@ export function CekOngkirPage() {
                 </p>
                 <input
                   value={weight}
-                  onChange={(event) => setWeight(event.target.value)}
+                  onChange={(event) => {
+                    setWeight(event.target.value);
+                    if (fieldErrors.weight) setFieldError("weight", validateWeight(event.target.value));
+                  }}
+                  onBlur={(event) => setFieldError("weight", validateWeight(event.target.value))}
                   className="mt-2 h-[46px] w-full rounded-[10px] border border-[#e5e9e2] bg-[#f1f3ef] px-4 text-[13px] text-[#3f4a43] outline-none"
                   placeholder="2.50"
                 />
+                {fieldErrors.weight ? (
+                  <p className="mt-2 text-[12px] font-medium text-[#b42318]">{fieldErrors.weight}</p>
+                ) : null}
               </div>
 
               <div>
                 <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-[#4c534e]">
-                  Dimensi (cm)
+                  Dimensi Paket (cm)
                 </p>
                 <div className="mt-2 grid grid-cols-3 gap-2">
                   <input
+                    type="number"
+                    min="0"
                     value={length}
                     onChange={(event) => setLength(event.target.value)}
-                    className="h-[46px] rounded-[10px] border border-[#e5e9e2] bg-[#f1f3ef] px-4 text-center text-[13px] text-[#3f4a43] outline-none"
-                    placeholder="P"
+                    className="w-full rounded-[14px] border border-[#d9dfd7] bg-white px-3 py-2 text-[13px] text-[#27352d] placeholder:text-[#9ca59e] focus:outline-none"
+                    placeholder="Panjang"
                   />
                   <input
+                    type="number"
+                    min="0"
                     value={width}
                     onChange={(event) => setWidth(event.target.value)}
-                    className="h-[46px] rounded-[10px] border border-[#e5e9e2] bg-[#f1f3ef] px-4 text-center text-[13px] text-[#3f4a43] outline-none"
-                    placeholder="L"
+                    className="w-full rounded-[14px] border border-[#d9dfd7] bg-white px-3 py-2 text-[13px] text-[#27352d] placeholder:text-[#9ca59e] focus:outline-none"
+                    placeholder="Lebar"
                   />
                   <input
+                    type="number"
+                    min="0"
                     value={height}
                     onChange={(event) => setHeight(event.target.value)}
-                    className="h-[46px] rounded-[10px] border border-[#e5e9e2] bg-[#f1f3ef] px-4 text-center text-[13px] text-[#3f4a43] outline-none"
-                    placeholder="T"
+                    className="w-full rounded-[14px] border border-[#d9dfd7] bg-white px-3 py-2 text-[13px] text-[#27352d] placeholder:text-[#9ca59e] focus:outline-none"
+                    placeholder="Tinggi"
                   />
                 </div>
               </div>
@@ -387,50 +487,8 @@ export function CekOngkirPage() {
         </div>
       </section>
 
-      <footer id="kontak" className="mt-10 bg-white/85">
-        <div className="shell py-12">
-          <div className="grid gap-10 border-b border-[#e8ebe4] pb-10 md:grid-cols-2 lg:grid-cols-[1.4fr_0.7fr_0.7fr]">
-            <div>
-              <p className="text-[18px] font-extrabold tracking-[-0.03em] text-shipin-deep">SHIPIN GO</p>
-              <p className="mt-5 max-w-[360px] text-[15px] leading-8 text-shipin-text">
-                Solusi logistik terdepan di Indonesia. Menghubungkan orang dan bisnis
-                melalui sistem pengiriman yang cerdas dan efisien.
-              </p>
-            </div>
-            <div>
-              <p className="text-[15px] font-bold text-shipin-ink">Perusahaan</p>
-              <ul className="mt-5 space-y-4 text-[15px] text-shipin-text">
-                <li>Tentang Kami</li>
-                <li>Karir</li>
-                <li>Kontak</li>
-              </ul>
-            </div>
-            <div>
-              <p className="text-[15px] font-bold text-shipin-ink">Dukungan</p>
-              <ul className="mt-5 space-y-4 text-[15px] text-shipin-text">
-                <li>Pusat Bantuan</li>
-                <li>Syarat &amp; Ketentuan</li>
-                <li>Kebijakan Privasi</li>
-              </ul>
-            </div>
-          </div>
-          <div className="flex flex-col gap-4 pt-7 text-[14px] text-shipin-text sm:flex-row sm:items-center sm:justify-between">
-            <p>(c) 2024 SHIPIN GO. Hak Cipta Dilindungi.</p>
-            <div className="flex gap-6">
-              <a href="https://www.instagram.com/" target="_blank" rel="noreferrer" className="hover:text-shipin-deep">
-                Instagram
-              </a>
-              <a href="https://www.linkedin.com/" target="_blank" rel="noreferrer" className="hover:text-shipin-deep">
-                LinkedIn
-              </a>
-              <a href="https://x.com/" target="_blank" rel="noreferrer" className="hover:text-shipin-deep">
-                Twitter
-              </a>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <PublicFooter />
+      {toastMessage ? <PublicToast message={toastMessage} /> : null}
     </main>
   );
 }
-

@@ -1,0 +1,502 @@
+
+> shipin-go@0.1.0 dev
+> next dev
+
+▲ Next.js 16.2.3 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.1.4:3000
+- Environments: .env.local
+✓ Ready in 984ms
+⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of D:\bun.lock as the root directory.
+ To silence this warning, set `turbopack.root` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack#root-directory for more information.
+ Detected additional lockfiles: 
+   * D:\PROJECT SIWEB\package-lock.json
+
+Creating turbopack project { dir: 'D:\\PROJECT SIWEB', testMode: true }
+
+ GET /login 200 in 1773ms (next.js: 920ms, proxy.ts: 247ms, application-code: 606ms)
+ GET /register 200 in 1787ms (next.js: 1407ms, proxy.ts: 249ms, application-code: 131ms)
+(node:7220) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ POST /api/admin/register 200 in 4.4s (next.js: 324ms, application-code: 4.1s)
+ GET / 200 in 209ms (next.js: 68ms, application-code: 141ms)
+[browser] Image with src "/images/landing-hero-photo.jpg" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes (.next\dev\static\chunks\0_s8_next_dist_0xo~-~p._.js:2431:13)
+[browser] Image with src "/images/enterprise-courier.jpg" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes (.next\dev\static\chunks\0_s8_next_dist_0xo~-~p._.js:2431:13)
+✓ Compiled in 377ms
+ GET / 200 in 220ms (next.js: 87ms, application-code: 133ms)
+ GET / 200 in 302ms (next.js: 7ms, application-code: 296ms)
+[browser] Image with src "/images/landing-hero-photo.jpg" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes (.next\dev\static\chunks\0_s8_next_dist_0xo~-~p._.js:2431:13)
+[browser] Image with src "/images/enterprise-courier.jpg" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes (.next\dev\static\chunks\0_s8_next_dist_0xo~-~p._.js:2431:13)
+✓ Compiled in 915ms
+ GET / 200 in 121ms (next.js: 10ms, application-code: 111ms)
+[browser] Image with src "/images/landing-hero-photo.jpg" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes (.next\dev\static\chunks\0_s8_next_dist_0xo~-~p._.js:2431:13)
+ GET / 200 in 114ms (next.js: 5ms, application-code: 109ms)
+[browser] Image with src "/images/landing-hero-photo.jpg" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes (.next\dev\static\chunks\0_s8_next_dist_0xo~-~p._.js:2431:13)
+ GET / 200 in 126ms (next.js: 6ms, application-code: 119ms)
+[browser] Image with src "/images/landing-hero-photo.jpg" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes (.next\dev\static\chunks\0_s8_next_dist_0xo~-~p._.js:2431:13)
+✓ Compiled in 309ms
+ GET / 200 in 195ms (next.js: 110ms, application-code: 84ms)
+✓ Compiled in 308ms
+ GET / 200 in 186ms (next.js: 79ms, application-code: 108ms)
+[browser] Image with src "/images/enterprise-courier.jpg" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes (.next\dev\static\chunks\0_s8_next_dist_0xo~-~p._.js:2431:13)
+✓ Compiled in 289ms
+ GET / 200 in 204ms (next.js: 82ms, application-code: 121ms)
+ GET / 200 in 281ms (next.js: 9ms, application-code: 272ms)
+[browser] Image with src "/images/landing-hero-photo.jpg" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes (.next\dev\static\chunks\0_s8_next_dist_0xo~-~p._.js:2431:13)
+✓ Compiled in 327ms
+ GET / 200 in 195ms (next.js: 83ms, application-code: 112ms)
+ GET / 200 in 264ms (next.js: 4ms, application-code: 260ms)
+[browser] Image with src "/images/landing-hero-photo.jpg" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes (.next\dev\static\chunks\0_s8_next_dist_0xo~-~p._.js:2431:13)
+ GET / 200 in 97ms (next.js: 5ms, application-code: 93ms)
+[browser] Image with src "/images/landing-hero-photo.jpg" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes (.next\dev\static\chunks\0_s8_next_dist_0xo~-~p._.js:2431:13)
+✓ Compiled in 260ms
+ GET / 200 in 206ms (next.js: 80ms, application-code: 126ms)
+ GET / 200 in 236ms (next.js: 9ms, application-code: 227ms)
+[browser] Image with src "/images/landing-hero-photo.jpg" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes (.next\dev\static\chunks\0_s8_next_dist_0xo~-~p._.js:2431:13)
+ GET / 200 in 108ms (next.js: 9ms, application-code: 99ms)
+[browser] Image with src "/images/landing-hero-photo.jpg" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes (.next\dev\static\chunks\0_s8_next_dist_0xo~-~p._.js:2431:13)
+[browser] Image with src "/images/enterprise-courier.jpg" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes (.next\dev\static\chunks\0_s8_next_dist_0xo~-~p._.js:2431:13)
+ GET /register 200 in 182ms (next.js: 24ms, proxy.ts: 97ms, application-code: 62ms)
+[browser] Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior (.next\dev\static\chunks\0_s8_next_dist_0xo~-~p._.js:2431:13)
+[browser] Image with src "/images/login-courier.jpg" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes (.next\dev\static\chunks\0_s8_next_dist_0xo~-~p._.js:2431:13)
+ GET /login 200 in 105ms (next.js: 33ms, proxy.ts: 7ms, application-code: 64ms)
+ GET /register 200 in 59ms (next.js: 5ms, proxy.ts: 6ms, application-code: 47ms)
+ GET /login 200 in 44ms (next.js: 4ms, proxy.ts: 7ms, application-code: 33ms)
+ GET /lupa-password 200 in 1175ms (next.js: 1126ms, proxy.ts: 5ms, application-code: 44ms)
+ GET /admin/login 200 in 117ms (next.js: 55ms, proxy.ts: 6ms, application-code: 55ms)
+ GET / 200 in 40ms (next.js: 4ms, application-code: 36ms)
+ GET /lacak-paket 200 in 93ms (next.js: 46ms, application-code: 47ms)
+ GET /kontak 200 in 75ms (next.js: 38ms, application-code: 37ms)
+ GET /ulasan 200 in 74ms (next.js: 39ms, application-code: 36ms)
+ GET /kontak 200 in 39ms (next.js: 5ms, application-code: 34ms)
+ GET /api/reviews 200 in 3.6s (next.js: 68ms, application-code: 3.6s)
+ GET /api/reviews 200 in 3.6s (next.js: 83ms, application-code: 3.6s)
+ GET /api/cek-progress 200 in 5.6s (next.js: 70ms, application-code: 5.5s)
+ GET /api/cek-progress 200 in 5.7s (next.js: 95ms, application-code: 5.6s)
+ GET /cek-ongkir 200 in 83ms (next.js: 36ms, application-code: 48ms)
+ GET /lacak-paket 200 in 44ms (next.js: 4ms, application-code: 41ms)
+ GET /api/cek-progress 200 in 311ms (next.js: 5ms, application-code: 306ms)
+ GET /api/cek-progress 200 in 316ms (next.js: 13ms, application-code: 302ms)
+ GET /kontak 200 in 37ms (next.js: 4ms, application-code: 32ms)
+ GET /cek-ongkir 200 in 40ms (next.js: 3ms, application-code: 37ms)
+ GET / 200 in 35ms (next.js: 4ms, application-code: 31ms)
+ GET /cek-ongkir 200 in 40ms (next.js: 4ms, application-code: 36ms)
+ GET / 200 in 29ms (next.js: 4ms, application-code: 26ms)
+✓ Compiled in 338ms
+✓ Compiled in 782ms
+ GET / 200 in 1169ms (next.js: 587ms, application-code: 582ms)
+ GET / 200 in 425ms (next.js: 77ms, application-code: 348ms)
+ GET / 200 in 274ms (next.js: 49ms, application-code: 224ms)
+ GET / 200 in 276ms (next.js: 6ms, application-code: 270ms)
+ GET / 200 in 275ms (next.js: 83ms, application-code: 192ms)
+ GET / 200 in 293ms (next.js: 4ms, application-code: 289ms)
+ GET / 200 in 232ms (next.js: 5ms, application-code: 226ms)
+ GET / 200 in 238ms (next.js: 8ms, application-code: 230ms)
+ GET / 200 in 197ms (next.js: 35ms, application-code: 162ms)
+ GET / 200 in 197ms (next.js: 66ms, application-code: 132ms)
+ GET / 200 in 199ms (next.js: 4ms, application-code: 195ms)
+ GET / 200 in 232ms (next.js: 5ms, application-code: 228ms)
+ GET / 200 in 195ms (next.js: 3ms, application-code: 192ms)
+ GET / 200 in 230ms (next.js: 6ms, application-code: 224ms)
+ GET / 200 in 196ms (next.js: 4ms, application-code: 192ms)
+ GET / 200 in 196ms (next.js: 34ms, application-code: 162ms)
+ GET / 200 in 199ms (next.js: 68ms, application-code: 131ms)
+ GET / 200 in 238ms (next.js: 5ms, application-code: 234ms)
+ GET / 200 in 204ms (next.js: 11ms, application-code: 193ms)
+ GET / 200 in 227ms (next.js: 8ms, application-code: 219ms)
+ GET / 200 in 191ms (next.js: 42ms, application-code: 149ms)
+ GET / 200 in 193ms (next.js: 6ms, application-code: 187ms)
+ GET / 200 in 126ms (next.js: 4ms, application-code: 122ms)
+ GET / 200 in 230ms (next.js: 4ms, application-code: 227ms)
+ GET / 200 in 203ms (next.js: 4ms, application-code: 200ms)
+ GET / 200 in 242ms (next.js: 6ms, application-code: 236ms)
+ GET / 200 in 241ms (next.js: 37ms, application-code: 204ms)
+ GET / 200 in 242ms (next.js: 67ms, application-code: 176ms)
+ GET / 200 in 185ms (next.js: 6ms, application-code: 179ms)
+ GET / 200 in 255ms (next.js: 5ms, application-code: 250ms)
+ GET / 200 in 222ms (next.js: 5ms, application-code: 217ms)
+ GET / 200 in 251ms (next.js: 5ms, application-code: 245ms)
+ GET / 200 in 249ms (next.js: 81ms, application-code: 168ms)
+ GET / 200 in 251ms (next.js: 44ms, application-code: 207ms)
+ GET / 200 in 135ms (next.js: 8ms, application-code: 127ms)
+ GET / 200 in 286ms (next.js: 9ms, application-code: 278ms)
+ GET / 200 in 250ms (next.js: 4ms, application-code: 246ms)
+ GET / 200 in 217ms (next.js: 37ms, application-code: 180ms)
+ GET / 200 in 220ms (next.js: 6ms, application-code: 214ms)
+ GET / 200 in 220ms (next.js: 68ms, application-code: 152ms)
+ GET / 200 in 112ms (next.js: 5ms, application-code: 107ms)
+✓ Compiled in 258ms
+ GET / 200 in 635ms (next.js: 96ms, application-code: 539ms)
+ GET / 200 in 443ms (next.js: 55ms, application-code: 388ms)
+ GET / 200 in 446ms (next.js: 5ms, application-code: 441ms)
+ GET / 200 in 271ms (next.js: 74ms, application-code: 197ms)
+ GET / 200 in 97ms (next.js: 6ms, application-code: 91ms)
+ GET / 200 in 244ms (next.js: 72ms, application-code: 172ms)
+ GET / 200 in 87ms (next.js: 5ms, application-code: 83ms)
+ GET / 200 in 267ms (next.js: 84ms, application-code: 183ms)
+ GET / 200 in 86ms (next.js: 6ms, application-code: 80ms)
+ GET /kontak 200 in 1546ms (next.js: 97ms, application-code: 1449ms)
+ GET /lacak-paket 200 in 1552ms (next.js: 321ms, application-code: 1231ms)
+ GET / 200 in 1558ms (next.js: 447ms, application-code: 1111ms)
+ GET /cek-ongkir 200 in 1572ms (next.js: 558ms, application-code: 1014ms)
+ GET /ulasan 200 in 1582ms (next.js: 1257ms, application-code: 325ms)
+ GET /route-yang-tidak-ada 404 in 871ms (next.js: 802ms, application-code: 69ms)
+ GET /api/reviews 200 in 5.3s (next.js: 81ms, application-code: 5.2s)
+ GET /api/lacak?resi=INVALID-RESI 200 in 5.3s (next.js: 304ms, application-code: 5.0s)
+ GET /api/lacak?resi=SPG-DOES-NOT-EXIST-ID 200 in 5.2s (next.js: 150ms, application-code: 5.0s)
+ POST /api/reviews 200 in 6.0s (next.js: 4ms, application-code: 6.0s)
+ DELETE /api/reviews/48dfc312-dee8-45ae-99f8-9384a737bed1?reviewerToken=722d9708-79c4-438f-aa30-392398462b5e 200 in 1915ms (next.js: 1238ms, application-code: 677ms)
+[browser] Image with src "/images/landing-hero-photo.jpg" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes (.next\dev\static\chunks\0_s8_next_dist_0xo~-~p._.js:2431:13)
+ GET / 200 in 140ms (next.js: 7ms, application-code: 133ms)
+[browser] Image with src "/images/landing-hero-photo.jpg" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes (.next\dev\static\chunks\0_s8_next_dist_0xo~-~p._.js:2431:13)
+[browser] Image with src "/images/enterprise-courier.jpg" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes (.next\dev\static\chunks\0_s8_next_dist_0xo~-~p._.js:2431:13)
+ GET /lacak-paket 200 in 47ms (next.js: 7ms, application-code: 41ms)
+[browser] Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior (.next\dev\static\chunks\0_s8_next_dist_0xo~-~p._.js:2431:13)
+ GET /api/cek-progress 200 in 3.4s (next.js: 5ms, application-code: 3.4s)
+ GET /api/cek-progress 200 in 3.5s (next.js: 62ms, application-code: 3.4s)
+ GET /kontak 200 in 34ms (next.js: 4ms, application-code: 31ms)
+ GET /kontak 200 in 148ms (next.js: 5ms, application-code: 143ms)
+ GET /kontak 200 in 117ms (next.js: 12ms, application-code: 106ms)
+ GET /kontak 200 in 117ms (next.js: 9ms, application-code: 107ms)
+ GET /ulasan 200 in 55ms (next.js: 7ms, application-code: 48ms)
+[browser] Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior (.next\dev\static\chunks\0_s8_next_dist_0xo~-~p._.js:2431:13)
+ GET /api/reviews 200 in 325ms (next.js: 6ms, application-code: 318ms)
+ GET /api/reviews 200 in 327ms (next.js: 13ms, application-code: 313ms)
+ GET /cek-ongkir 200 in 51ms (next.js: 7ms, application-code: 44ms)
+✓ Compiled in 208ms
+ GET /cek-ongkir 200 in 243ms (next.js: 120ms, application-code: 124ms)
+ GET /cek-ongkir 200 in 267ms (next.js: 6ms, application-code: 261ms)
+ GET / 200 in 51ms (next.js: 16ms, application-code: 34ms)
+[browser] Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior (.next\dev\static\chunks\0_s8_next_dist_0xo~-~p._.js:2431:13)
+[browser] Image with src "/images/landing-hero-photo.jpg" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes (.next\dev\static\chunks\0_s8_next_dist_0xo~-~p._.js:2431:13)
+[browser] Image with src "/images/enterprise-courier.jpg" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes (.next\dev\static\chunks\0_s8_next_dist_0xo~-~p._.js:2431:13)
+ GET /lacak-paket 200 in 62ms (next.js: 26ms, application-code: 35ms)
+ GET / 200 in 35ms (next.js: 3ms, application-code: 32ms)
+ GET /api/cek-progress 200 in 5.1s (next.js: 75ms, application-code: 5.0s)
+ GET /api/cek-progress 200 in 5.1s (next.js: 65ms, application-code: 5.0s)
+ GET /cek-ongkir 200 in 33ms (next.js: 4ms, application-code: 30ms)
+ GET / 200 in 36ms (next.js: 4ms, application-code: 32ms)
+ GET /ulasan 200 in 77ms (next.js: 37ms, application-code: 39ms)
+ GET /kontak 200 in 58ms (next.js: 15ms, application-code: 43ms)
+ GET /api/reviews 200 in 3.5s (next.js: 62ms, application-code: 3.5s)
+ GET /api/reviews 200 in 3.5s (next.js: 57ms, application-code: 3.5s)
+ GET /login 200 in 303ms (next.js: 141ms, proxy.ts: 75ms, application-code: 88ms)
+[browser] Image with src "/images/login-courier.jpg" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes (.next\dev\static\chunks\0_s8_next_dist_0xo~-~p._.js:2431:13)
+ GET /lupa-password 200 in 163ms (next.js: 89ms, proxy.ts: 5ms, application-code: 70ms)
+⚠ Fast Refresh had to perform a full reload when ./PROJECT SIWEB/node_modules/next/dist/client/image-component.js changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+⚠ Fast Refresh had to perform a full reload when ./PROJECT SIWEB/node_modules/next/dist/client/image-component.js changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+✓ Compiled in 503ms
+⚠ Fast Refresh had to perform a full reload when ./PROJECT SIWEB/node_modules/next/dist/client/image-component.js changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /lupa-password 200 in 788ms (next.js: 121ms, proxy.ts: 227ms, application-code: 440ms)
+ GET /lupa-password 200 in 342ms (next.js: 244ms, proxy.ts: 9ms, application-code: 89ms)
+ GET /lupa-password 200 in 586ms (next.js: 10ms, proxy.ts: 211ms, application-code: 364ms)
+✓ Compiled in 292ms
+ GET /lupa-password 200 in 577ms (next.js: 91ms, proxy.ts: 233ms, application-code: 253ms)
+ GET /lupa-password 200 in 121ms (next.js: 5ms, proxy.ts: 16ms, application-code: 100ms)
+ GET /lupa-password 200 in 63ms (next.js: 6ms, proxy.ts: 6ms, application-code: 51ms)
+ POST /api/admin/register 200 in 4.0s (next.js: 67ms, application-code: 3.9s)
+ POST /api/admin/password-reset 200 in 1123ms (next.js: 368ms, application-code: 755ms)
+ POST /api/admin/session 200 in 586ms (next.js: 93ms, application-code: 493ms)
+ GET /lupa-password 200 in 205ms (next.js: 5ms, proxy.ts: 8ms, application-code: 192ms)
+ GET /login 200 in 207ms (next.js: 88ms, proxy.ts: 5ms, application-code: 113ms)
+[browser] Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior (.next\dev\static\chunks\0_s8_next_dist_0xo~-~p._.js:2431:13)
+[browser] Image with src "/images/login-courier.jpg" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes (.next\dev\static\chunks\0_s8_next_dist_0xo~-~p._.js:2431:13)
+ GET / 200 in 166ms (next.js: 92ms, application-code: 74ms)
+[browser] Image with src "/images/landing-hero-photo.jpg" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes (.next\dev\static\chunks\0_s8_next_dist_0xo~-~p._.js:2431:13)
+[browser] Image with src "/images/enterprise-courier.jpg" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes (.next\dev\static\chunks\0_s8_next_dist_0xo~-~p._.js:2431:13)
+ GET /cek-ongkir 200 in 187ms (next.js: 93ms, application-code: 94ms)
+ GET /ulasan 200 in 153ms (next.js: 86ms, application-code: 66ms)
+ GET /kontak 200 in 154ms (next.js: 89ms, application-code: 64ms)
+ GET /lacak-paket 200 in 171ms (next.js: 106ms, application-code: 65ms)
+ GET /kontak 200 in 38ms (next.js: 4ms, application-code: 34ms)
+ GET /api/reviews 200 in 3.4s (next.js: 63ms, application-code: 3.4s)
+ GET /api/reviews 200 in 3.5s (next.js: 56ms, application-code: 3.5s)
+ GET /api/cek-progress 200 in 3.5s (next.js: 46ms, application-code: 3.5s)
+ GET /api/cek-progress 200 in 3.5s (next.js: 55ms, application-code: 3.4s)
+ GET /login 200 in 67ms (next.js: 4ms, proxy.ts: 7ms, application-code: 56ms)
+ POST /api/admin/session 200 in 401ms (next.js: 7ms, application-code: 395ms)
+ GET /admin/dashboard 200 in 229ms (next.js: 131ms, proxy.ts: 8ms, application-code: 91ms)
+ GET /admin/dashboard 200 in 77ms (next.js: 7ms, proxy.ts: 10ms, application-code: 60ms)
+Neon connection check /api/admin/profile GET: 2026-06-01 21:41:48.612387+00
+Neon connection check /api/admin/profile GET: 2026-06-01 21:41:48.612715+00
+ GET /api/shipments?search= 200 in 989ms (next.js: 79ms, application-code: 909ms)
+ GET /api/shipments?search= 200 in 1006ms (next.js: 76ms, application-code: 929ms)
+ GET /api/admin/profile 200 in 1295ms (next.js: 4ms, application-code: 1292ms)
+ GET /api/admin/profile 200 in 1375ms (next.js: 67ms, application-code: 1308ms)
+ DELETE /api/admin/session 200 in 11ms (next.js: 3ms, application-code: 8ms)
+ GET /admin/login 200 in 186ms (next.js: 101ms, proxy.ts: 6ms, application-code: 79ms)
+ GET /admin/login 200 in 74ms (next.js: 5ms, proxy.ts: 6ms, application-code: 62ms)
+ POST /api/admin/session 401 in 291ms (next.js: 4ms, application-code: 287ms)
+ POST /api/admin/session 200 in 470ms (next.js: 4ms, application-code: 466ms)
+ GET /admin/dashboard 200 in 106ms (next.js: 11ms, proxy.ts: 8ms, application-code: 86ms)
+ GET /admin/dashboard 200 in 98ms (next.js: 5ms, proxy.ts: 41ms, application-code: 52ms)
+Neon connection check /api/admin/profile GET: 2026-06-01 21:42:15.436916+00
+Neon connection check /api/admin/profile GET: 2026-06-01 21:42:15.436725+00
+ GET /api/shipments?search= 200 in 958ms (next.js: 16ms, application-code: 942ms)
+ GET /api/shipments?search= 200 in 1269ms (next.js: 22ms, application-code: 1246ms)
+ GET /api/admin/profile 200 in 1270ms (next.js: 27ms, application-code: 1243ms)
+ GET /api/admin/profile 200 in 1275ms (next.js: 8ms, application-code: 1267ms)
+ GET /admin/dashboard 200 in 287ms (next.js: 5ms, proxy.ts: 8ms, application-code: 275ms)
+Neon connection check /api/admin/profile GET: 2026-06-01 21:42:29.572631+00
+ GET /api/shipments?search= 200 in 1277ms (next.js: 3ms, application-code: 1274ms)
+ GET /api/admin/profile 200 in 1295ms (next.js: 4ms, application-code: 1291ms)
+ GET /admin/histori 200 in 1249ms (next.js: 1201ms, proxy.ts: 5ms, application-code: 44ms)
+[browser] Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior (.next\dev\static\chunks\0_s8_next_dist_0xo~-~p._.js:2431:13)
+ GET /api/cek-progress 200 in 273ms (next.js: 4ms, application-code: 269ms)
+ GET /api/cek-progress 200 in 296ms (next.js: 11ms, application-code: 285ms)
+ GET /api/vehicles 200 in 412ms (next.js: 68ms, application-code: 344ms)
+ GET /api/vehicles 200 in 431ms (next.js: 69ms, application-code: 362ms)
+ GET /api/shipments?search= 200 in 940ms (next.js: 6ms, application-code: 934ms)
+ GET /api/shipments?search= 200 in 1207ms (next.js: 11ms, application-code: 1195ms)
+ GET /api/cek-progress 200 in 284ms (next.js: 3ms, application-code: 282ms)
+ GET /api/shipments?search= 200 in 923ms (next.js: 5ms, application-code: 919ms)
+ GET /api/cek-progress 200 in 276ms (next.js: 4ms, application-code: 272ms)
+ GET /api/shipments?search= 200 in 1219ms (next.js: 5ms, application-code: 1215ms)
+ GET /api/cek-progress 200 in 270ms (next.js: 4ms, application-code: 266ms)
+ GET /api/shipments?search= 200 in 801ms (next.js: 3ms, application-code: 798ms)
+ GET /api/cek-progress 200 in 305ms (next.js: 4ms, application-code: 301ms)
+ GET /api/shipments?search= 200 in 1228ms (next.js: 3ms, application-code: 1225ms)
+ GET /api/cek-progress 200 in 373ms (next.js: 4ms, application-code: 370ms)
+ GET /api/shipments?search= 200 in 1223ms (next.js: 3ms, application-code: 1220ms)
+ GET /api/cek-progress 200 in 342ms (next.js: 4ms, application-code: 339ms)
+ GET /api/shipments?search= 200 in 983ms (next.js: 5ms, application-code: 978ms)
+ GET /api/cek-progress 200 in 315ms (next.js: 3ms, application-code: 312ms)
+ GET /api/shipments?search= 200 in 1225ms (next.js: 3ms, application-code: 1222ms)
+ GET /api/cek-progress 200 in 294ms (next.js: 3ms, application-code: 291ms)
+ GET /api/shipments?search= 200 in 1225ms (next.js: 3ms, application-code: 1221ms)
+ GET /admin/ulasan 200 in 841ms (next.js: 785ms, proxy.ts: 5ms, application-code: 51ms)
+ GET /api/reviews?includeHidden=1 200 in 601ms (next.js: 5ms, application-code: 596ms)
+ GET /api/reviews?includeHidden=1 200 in 602ms (next.js: 15ms, application-code: 588ms)
+ GET /admin/profile 200 in 88ms (next.js: 46ms, proxy.ts: 5ms, application-code: 37ms)
+Neon connection check /api/admin/profile GET: 2026-06-01 21:43:14.218561+00
+Neon connection check /api/admin/profile GET: 2026-06-01 21:43:14.217756+00
+ GET /api/admin/profile 200 in 1308ms (next.js: 22ms, application-code: 1286ms)
+ GET /api/admin/profile 200 in 1312ms (next.js: 8ms, application-code: 1303ms)
+ GET /admin/dashboard 200 in 41ms (next.js: 5ms, proxy.ts: 4ms, application-code: 32ms)
+ GET /api/shipments?search= 200 in 898ms (next.js: 21ms, application-code: 878ms)
+ GET /api/shipments?search= 200 in 1205ms (next.js: 8ms, application-code: 1197ms)
+ GET /admin/histori 200 in 56ms (next.js: 11ms, proxy.ts: 5ms, application-code: 41ms)
+ GET /api/cek-progress 200 in 326ms (next.js: 4ms, application-code: 322ms)
+ GET /api/cek-progress 200 in 328ms (next.js: 9ms, application-code: 319ms)
+ GET /api/vehicles 200 in 301ms (next.js: 10ms, application-code: 291ms)
+ GET /api/shipments?search= 200 in 1233ms (next.js: 5ms, application-code: 1228ms)
+ GET /api/cek-progress 200 in 314ms (next.js: 3ms, application-code: 311ms)
+ GET /api/vehicles 200 in 4.0s (next.js: 8ms, application-code: 4.0s)
+ GET /api/shipments?search= 200 in 1085ms (next.js: 3ms, application-code: 1082ms)
+ GET /api/shipments?search= 200 in 5.2s (next.js: 3ms, application-code: 5.2s)
+ GET /api/cek-progress 200 in 265ms (next.js: 3ms, application-code: 262ms)
+ GET /api/shipments?search= 200 in 1051ms (next.js: 4ms, application-code: 1047ms)
+ GET /admin/dashboard 200 in 38ms (next.js: 6ms, proxy.ts: 5ms, application-code: 27ms)
+ GET /api/shipments?search= 200 in 861ms (next.js: 5ms, application-code: 855ms)
+ GET /api/shipments?search= 200 in 868ms (next.js: 11ms, application-code: 856ms)
+ GET /admin/histori 200 in 42ms (next.js: 5ms, proxy.ts: 7ms, application-code: 31ms)
+ GET /api/cek-progress 200 in 367ms (next.js: 5ms, application-code: 362ms)
+ GET /api/cek-progress 200 in 367ms (next.js: 16ms, application-code: 352ms)
+ GET /api/vehicles 200 in 299ms (next.js: 10ms, application-code: 289ms)
+ GET /api/shipments?search= 200 in 1125ms (next.js: 5ms, application-code: 1120ms)
+ GET /api/cek-progress 200 in 267ms (next.js: 3ms, application-code: 264ms)
+ GET /api/vehicles 200 in 3.2s (next.js: 3ms, application-code: 3.2s)
+ GET /api/shipments?search= 200 in 3.9s (next.js: 3ms, application-code: 3.9s)
+ GET /api/shipments?search= 200 in 1041ms (next.js: 3ms, application-code: 1037ms)
+ GET /api/cek-progress 200 in 350ms (next.js: 4ms, application-code: 346ms)
+ GET /api/shipments?search= 200 in 990ms (next.js: 28ms, application-code: 962ms)
+ GET /api/cek-progress 200 in 380ms (next.js: 4ms, application-code: 376ms)
+ GET /api/shipments?search= 200 in 1132ms (next.js: 3ms, application-code: 1129ms)
+ GET /api/cek-progress 200 in 360ms (next.js: 9ms, application-code: 351ms)
+ GET /api/shipments?search= 200 in 1232ms (next.js: 3ms, application-code: 1229ms)
+ GET /api/cek-progress 200 in 332ms (next.js: 3ms, application-code: 329ms)
+ GET /api/shipments?search= 200 in 918ms (next.js: 3ms, application-code: 915ms)
+ GET /api/cek-progress 200 in 300ms (next.js: 3ms, application-code: 297ms)
+ GET /api/shipments?search= 200 in 1231ms (next.js: 3ms, application-code: 1228ms)
+✓ Compiled in 297ms
+ GET /admin/histori 200 in 396ms (next.js: 196ms, proxy.ts: 114ms, application-code: 86ms)
+✓ Compiled in 185ms
+ GET /admin/histori 200 in 244ms (next.js: 78ms, proxy.ts: 58ms, application-code: 108ms)
+✓ Compiled in 285ms
+ GET /admin/histori 200 in 211ms (next.js: 72ms, proxy.ts: 58ms, application-code: 81ms)
+ GET /admin/histori 200 in 555ms (next.js: 78ms, proxy.ts: 82ms, application-code: 395ms)
+ GET /admin/histori 200 in 318ms (next.js: 7ms, proxy.ts: 8ms, application-code: 304ms)
+ GET /admin/histori 200 in 236ms (next.js: 13ms, proxy.ts: 13ms, application-code: 210ms)
+ GET /admin/histori 200 in 284ms (next.js: 50ms, proxy.ts: 13ms, application-code: 221ms)
+ GET /admin/histori 200 in 283ms (next.js: 116ms, proxy.ts: 15ms, application-code: 152ms)
+ GET /admin/histori 200 in 286ms (next.js: 82ms, proxy.ts: 15ms, application-code: 189ms)
+ GET /admin/histori 200 in 212ms (next.js: 8ms, proxy.ts: 7ms, application-code: 197ms)
+ GET /admin/histori 200 in 159ms (next.js: 7ms, proxy.ts: 9ms, application-code: 142ms)
+ GET /admin/histori 200 in 87ms (next.js: 7ms, proxy.ts: 13ms, application-code: 67ms)
+ GET /admin/histori 200 in 86ms (next.js: 38ms, proxy.ts: 13ms, application-code: 35ms)
+ GET /admin/dashboard 200 in 187ms (next.js: 96ms, proxy.ts: 7ms, application-code: 84ms)
+ GET /api/cek-progress 200 in 4.5s (next.js: 89ms, application-code: 4.4s)
+ GET /api/cek-progress 200 in 3.9s (next.js: 3ms, application-code: 3.9s)
+ GET /api/shipments?search= 200 in 1020ms (next.js: 14ms, application-code: 1006ms)
+ GET /api/shipments?search= 200 in 1027ms (next.js: 4ms, application-code: 1023ms)
+ GET /api/shipments?search= 200 in 4.2s (next.js: 84ms, application-code: 4.1s)
+ GET /api/shipments?search= 200 in 4.2s (next.js: 98ms, application-code: 4.1s)
+ GET /admin/dashboard 200 in 304ms (next.js: 5ms, proxy.ts: 6ms, application-code: 293ms)
+Neon connection check /api/admin/profile GET: 2026-06-01 21:54:48.075937+00
+ GET /api/shipments?search= 200 in 1251ms (next.js: 4ms, application-code: 1247ms)
+ GET /api/admin/profile 200 in 1377ms (next.js: 88ms, application-code: 1290ms)
+ GET /admin/kirim-paket 200 in 86ms (next.js: 48ms, proxy.ts: 5ms, application-code: 33ms)
+[browser] Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior (.next\dev\static\chunks\0_s8_next_dist_0xo~-~p._.js:2431:13)
+ GET /api/vehicles 200 in 454ms (next.js: 84ms, application-code: 370ms)
+ GET /api/vehicles 200 in 462ms (next.js: 72ms, application-code: 389ms)
+ GET /admin/kirim-paket 200 in 328ms (next.js: 69ms, proxy.ts: 118ms, application-code: 142ms)
+ GET /admin/kirim-paket 200 in 264ms (next.js: 4ms, proxy.ts: 5ms, application-code: 255ms)
+ GET /admin/kirim-paket 200 in 221ms (next.js: 45ms, proxy.ts: 15ms, application-code: 162ms)
+ GET /admin/kirim-paket 200 in 267ms (next.js: 17ms, proxy.ts: 13ms, application-code: 236ms)
+ GET /admin/kirim-paket 200 in 264ms (next.js: 100ms, proxy.ts: 17ms, application-code: 147ms)
+ GET /admin/kirim-paket 200 in 269ms (next.js: 72ms, proxy.ts: 17ms, application-code: 180ms)
+ GET /admin/kirim-paket 200 in 260ms (next.js: 7ms, proxy.ts: 146ms, application-code: 107ms)
+ GET /admin/kirim-paket 200 in 155ms (next.js: 7ms, proxy.ts: 6ms, application-code: 142ms)
+ GET /admin/kirim-paket 200 in 98ms (next.js: 8ms, proxy.ts: 9ms, application-code: 81ms)
+ GET /admin/kirim-paket 200 in 96ms (next.js: 45ms, proxy.ts: 9ms, application-code: 42ms)
+✓ Compiled in 172ms
+ GET /admin/kirim-paket 200 in 230ms (next.js: 84ms, proxy.ts: 78ms, application-code: 69ms)
+✓ Compiled in 142ms
+ GET /admin/kirim-paket 200 in 192ms (next.js: 68ms, proxy.ts: 57ms, application-code: 67ms)
+✓ Compiled in 156ms
+ GET /admin/kirim-paket 200 in 201ms (next.js: 67ms, proxy.ts: 62ms, application-code: 71ms)
+ GET /admin/dashboard 200 in 132ms (next.js: 73ms, proxy.ts: 5ms, application-code: 55ms)
+ GET /api/shipments?search= 200 in 5.5s (next.js: 52ms, application-code: 5.4s)
+ GET /api/shipments?search= 200 in 5.5s (next.js: 43ms, application-code: 5.4s)
+ GET /admin/dashboard 200 in 287ms (next.js: 7ms, proxy.ts: 5ms, application-code: 274ms)
+⨯ Error: Connection terminated due to connection timeout
+    at async loadShipments (app\api\shipments\route.ts:174:18)
+    at async GET (app\api\shipments\route.ts:268:21)
+  172 |     : "";
+  173 |
+> 174 |   const result = await pool.query<ShipmentRow>(
+      |                  ^
+  175 |     `
+  176 |       SELECT
+  177 |         s.id, {
+  [cause]: Error: Connection terminated unexpectedly
+      at ignore-listed frames
+}
+⨯ Error: Connection terminated due to connection timeout
+    at async loadShipments (app\api\shipments\route.ts:174:18)
+    at async GET (app\api\shipments\route.ts:268:21)
+  172 |     : "";
+  173 |
+> 174 |   const result = await pool.query<ShipmentRow>(
+      |                  ^
+  175 |     `
+  176 |       SELECT
+  177 |         s.id, {
+  [cause]: Error: Connection terminated unexpectedly
+      at ignore-listed frames
+}
+ GET /admin/kirim-paket 200 in 44ms (next.js: 5ms, proxy.ts: 7ms, application-code: 32ms)
+[browser] Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior (.next\dev\static\chunks\0_s8_next_dist_0xo~-~p._.js:2431:13)
+ GET /api/shipments?search= 200 in 10.1s (next.js: 6ms, application-code: 10.1s)
+⨯ Error: Connection terminated due to connection timeout
+    at async loadShipments (app\api\shipments\route.ts:174:18)
+    at async GET (app\api\shipments\route.ts:268:21)
+  172 |     : "";
+  173 |
+> 174 |   const result = await pool.query<ShipmentRow>(
+      |                  ^
+  175 |     `
+  176 |       SELECT
+  177 |         s.id, {
+  [cause]: Error: Connection terminated unexpectedly
+      at ignore-listed frames
+}
+GET /api/admin/profile failed Error: Connection terminated due to connection timeout
+    at async findAdminById (lib\server\admin-auth.ts:58:18)
+    at async getCurrentAdminFromRequest (lib\server\admin-auth.ts:86:18)
+    at async GET (app\api\admin\profile\route.ts:46:19)
+  56 |
+  57 | export async function findAdminById(id: string) {
+> 58 |   const result = await pool.query<AdminRow>(
+     |                  ^
+  59 |     `
+  60 |       SELECT id, full_name, username, email, phone, account_status, password_hash
+  61 |       FROM shipin_users {
+  [cause]: Error: Connection terminated unexpectedly
+      at ignore-listed frames
+}
+ GET /api/admin/profile 500 in 10.4s (next.js: 50ms, application-code: 10.4s)
+ GET /admin/histori 200 in 77ms (next.js: 30ms, proxy.ts: 5ms, application-code: 43ms)
+ GET /admin/ulasan 200 in 60ms (next.js: 23ms, proxy.ts: 4ms, application-code: 32ms)
+ GET /api/vehicles 200 in 5.3s (next.js: 54ms, application-code: 5.2s)
+ GET /api/vehicles 200 in 5.3s (next.js: 61ms, application-code: 5.2s)
+ GET /api/cek-progress 200 in 3.5s (next.js: 3ms, application-code: 3.5s)
+ GET /api/cek-progress 200 in 3.6s (next.js: 60ms, application-code: 3.5s)
+ GET /api/vehicles 200 in 291ms (next.js: 9ms, application-code: 282ms)
+ GET /api/reviews?includeHidden=1 200 in 580ms (next.js: 5ms, application-code: 575ms)
+ GET /api/reviews?includeHidden=1 200 in 751ms (next.js: 53ms, application-code: 698ms)
+ GET /api/vehicles 200 in 472ms (next.js: 3ms, application-code: 469ms)
+ GET /api/shipments?search= 200 in 915ms (next.js: 4ms, application-code: 911ms)
+ GET /api/shipments?search= 200 in 1100ms (next.js: 2ms, application-code: 1098ms)
+ GET /api/cek-progress 200 in 3.1s (next.js: 3ms, application-code: 3.1s)
+ GET /admin/histori 200 in 40ms (next.js: 5ms, proxy.ts: 5ms, application-code: 31ms)
+ GET /api/shipments?search= 200 in 817ms (next.js: 3ms, application-code: 814ms)
+ GET /api/cek-progress 200 in 310ms (next.js: 4ms, application-code: 306ms)
+ GET /api/cek-progress 200 in 311ms (next.js: 8ms, application-code: 303ms)
+ GET /api/vehicles 200 in 303ms (next.js: 9ms, application-code: 294ms)
+ GET /api/vehicles 200 in 288ms (next.js: 1704µs, application-code: 286ms)
+ GET /api/shipments?search= 200 in 866ms (next.js: 1977µs, application-code: 864ms)
+ GET /api/shipments?search= 200 in 1164ms (next.js: 5ms, application-code: 1160ms)
+ GET /api/cek-progress 200 in 284ms (next.js: 3ms, application-code: 281ms)
+ GET /api/shipments?search= 200 in 924ms (next.js: 3ms, application-code: 920ms)
+ GET /admin/profile 200 in 74ms (next.js: 20ms, proxy.ts: 6ms, application-code: 47ms)
+Neon connection check /api/admin/profile GET: 2026-06-01 22:00:46.784633+00
+Neon connection check /api/admin/profile GET: 2026-06-01 22:00:46.786094+00
+ GET /api/admin/profile 200 in 1294ms (next.js: 16ms, application-code: 1279ms)
+ GET /api/admin/profile 200 in 1303ms (next.js: 7ms, application-code: 1296ms)
+ GET /admin/dashboard 200 in 44ms (next.js: 4ms, proxy.ts: 5ms, application-code: 35ms)
+ GET /api/shipments?search= 200 in 957ms (next.js: 16ms, application-code: 941ms)
+ GET /api/shipments?search= 200 in 1265ms (next.js: 6ms, application-code: 1259ms)
+ DELETE /api/admin/session 200 in 83ms (next.js: 71ms, application-code: 12ms)
+ GET /admin/login 200 in 77ms (next.js: 23ms, proxy.ts: 5ms, application-code: 49ms)
+ GET /admin/login 200 in 54ms (next.js: 4ms, proxy.ts: 6ms, application-code: 44ms)
+[browser] Image with src "/images/login-courier.jpg" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes (.next\dev\static\chunks\0_s8_next_dist_0xo~-~p._.js:2431:13)
+ GET / 200 in 63ms (next.js: 20ms, application-code: 43ms)
+[browser] Image with src "/images/landing-hero-photo.jpg" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes (.next\dev\static\chunks\0_s8_next_dist_0xo~-~p._.js:2431:13)
+ GET / 200 in 169ms (next.js: 8ms, application-code: 161ms)
+ GET / 200 in 122ms (next.js: 3ms, application-code: 119ms)
+ GET / 200 in 182ms (next.js: 12ms, application-code: 170ms)
+ GET / 200 in 145ms (next.js: 9ms, application-code: 136ms)
+ GET / 200 in 154ms (next.js: 7ms, application-code: 147ms)
+[browser] Image with src "/images/landing-hero-photo.jpg" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes (.next\dev\static\chunks\0_s8_next_dist_0xo~-~p._.js:2431:13)
+[browser] Image with src "/images/enterprise-courier.jpg" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes (.next\dev\static\chunks\0_s8_next_dist_0xo~-~p._.js:2431:13)
+ GET /login 200 in 106ms (next.js: 33ms, proxy.ts: 5ms, application-code: 68ms)
+[browser] Detected `scroll-behavior: smooth` on the `<html>` element. To disable smooth scrolling during route transitions, add `data-scroll-behavior="smooth"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior (.next\dev\static\chunks\0_s8_next_dist_0xo~-~p._.js:2431:13)
+[browser] Image with src "/images/login-courier.jpg" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes (.next\dev\static\chunks\0_s8_next_dist_0xo~-~p._.js:2431:13)
+ GET /lupa-password 200 in 59ms (next.js: 23ms, proxy.ts: 4ms, application-code: 32ms)
+ GET /register 200 in 205ms (next.js: 106ms, proxy.ts: 7ms, application-code: 92ms)
+ POST /api/admin/session 200 in 3.6s (next.js: 3ms, application-code: 3.6s)
+ GET /admin/dashboard 200 in 49ms (next.js: 5ms, proxy.ts: 7ms, application-code: 37ms)
+ GET /admin/dashboard 200 in 54ms (next.js: 5ms, proxy.ts: 9ms, application-code: 40ms)
+Neon connection check /api/admin/profile GET: 2026-06-01 22:02:06.554956+00
+ GET /api/admin/profile 200 in 1084ms (next.js: 8ms, application-code: 1076ms)
+Neon connection check /api/admin/profile GET: 2026-06-01 22:02:09.731677+00
+ GET /api/shipments?search= 200 in 4.0s (next.js: 13ms, application-code: 4.0s)
+ GET /api/shipments?search= 200 in 4.0s (next.js: 6ms, application-code: 4.0s)
+ GET /api/admin/profile 200 in 4.3s (next.js: 16ms, application-code: 4.3s)
+ GET /admin/kirim-paket 200 in 45ms (next.js: 5ms, proxy.ts: 6ms, application-code: 34ms)
+ GET /api/vehicles 200 in 364ms (next.js: 19ms, application-code: 345ms)
+ GET /api/vehicles 200 in 339ms (next.js: 5ms, application-code: 334ms)
+ GET /admin/histori 200 in 37ms (next.js: 4ms, proxy.ts: 5ms, application-code: 28ms)
+ GET /api/cek-progress 200 in 319ms (next.js: 7ms, application-code: 312ms)
+ GET /api/cek-progress 200 in 334ms (next.js: 6ms, application-code: 328ms)
+ GET /api/vehicles 200 in 303ms (next.js: 9ms, application-code: 294ms)
+ GET /api/shipments?search= 200 in 1093ms (next.js: 4ms, application-code: 1089ms)
+ GET /api/cek-progress 200 in 267ms (next.js: 5ms, application-code: 263ms)
+ GET /api/vehicles 200 in 3.2s (next.js: 8ms, application-code: 3.2s)
+ GET /api/shipments?search= 200 in 786ms (next.js: 3ms, application-code: 783ms)
+ GET /api/shipments?search= 200 in 3.7s (next.js: 3ms, application-code: 3.7s)
+ GET /api/cek-progress 200 in 308ms (next.js: 3ms, application-code: 306ms)
+ GET /admin/ulasan 200 in 49ms (next.js: 5ms, proxy.ts: 7ms, application-code: 37ms)
+ GET /api/reviews?includeHidden=1 200 in 686ms (next.js: 5ms, application-code: 680ms)
+ GET /api/reviews?includeHidden=1 200 in 687ms (next.js: 13ms, application-code: 674ms)
+ GET /api/shipments?search= 200 in 1117ms (next.js: 33ms, application-code: 1084ms)

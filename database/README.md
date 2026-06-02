@@ -14,6 +14,7 @@ Folder ini berisi SQL database untuk domain project jasa pengiriman/kurir SHIPIN
 - `01_schema.sql`: schema idempotent untuk tabel, enum, foreign key, index, relasi one-to-one, one-to-many, dan many-to-many.
 - `02_seed.sql`: seed data dummy saling terhubung, minimal 10 data untuk tabel penting.
 - `03_check_queries.sql`: query validasi dan cheatsheet untuk Test Query.
+- `04_neon_sync_cleanup.sql`: sinkronisasi Neon production/dev untuk field baru shipment dan cleanup tabel legacy/tidak terpakai.
 
 ## Cara pakai di Neon SQL Editor
 
@@ -22,6 +23,22 @@ Folder ini berisi SQL database untuk domain project jasa pengiriman/kurir SHIPIN
 3. Jalankan isi `03_check_queries.sql` untuk bukti jumlah data dan relasi.
 
 File schema dan seed aman dijalankan ulang karena memakai `CREATE IF NOT EXISTS`, `ALTER ... IF NOT EXISTS`, dan `ON CONFLICT`.
+
+## Tabel aktif aplikasi saat ini
+
+- `shipin_users`: data pelanggan/admin yang dipakai shipment
+- `shipin_addresses`: alamat asal dan tujuan shipment
+- `shipin_shipping_services`: master layanan pengiriman
+- `shipin_package_categories`: master kategori paket untuk shipment
+- `shipin_hubs`: master hub asal/tujuan dan home hub kendaraan
+- `shipin_vehicles`: master kendaraan yang dipilih admin
+- `shipin_shipments`: data utama pengiriman, termasuk nama barang, jenis barang, dimensi, status, dan total
+- `shipin_payments`: pembayaran tiap shipment
+- `shipin_tracking_events`: event tracking untuk peta/lacak
+- `shipin_reviews`: sumber rating akun di halaman profile admin serta data utama modul ulasan admin/publik
+- `riwayat_pengiriman`: checkpoint histori pelacakan
+
+Tabel lain yang masih tersisa di Neon dari eksperimen/iterasi lama sebaiknya dihapus melalui `04_neon_sync_cleanup.sql` agar tidak membingungkan saat verifikasi data di console.
 
 ## Data Master
 

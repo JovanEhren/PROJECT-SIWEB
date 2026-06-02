@@ -9,99 +9,63 @@ export type ReviewItem = {
   avatarBg: string;
 };
 
-const STORAGE_KEY = "shipin_admin_reviews_v1";
+async function parseJsonResponse<T>(response: Response): Promise<T> {
+  const raw = await response.text();
+  let data: unknown = null;
 
-const DEFAULT_REVIEWS: ReviewItem[] = [
-  {
-    id: "rv-1",
-    initials: "AN",
-    name: "Adi Nugroho",
-    stars: 5,
-    text: '"Pengiriman sangat cepat dan kurirnya ramah banget. Paket sampai dalam kondisi sempurna tanpa lecet sedikitpun. Pasti langganan terus!"',
-    meta: "12 Okt 2023 | ID Transaksi: SHIP-9902",
-    visible: true,
-    avatarBg: "bg-[#d5efd8] text-[#11623a]"
-  },
-  {
-    id: "rv-2",
-    initials: "SP",
-    name: "Siska Putri",
-    stars: 3,
-    text: '"Sedikit kecewa karena estimasi waktu meleset 2 jam, tapi barang masih aman. Mohon ditingkatkan lagi akurasi pelacakannya."',
-    meta: "10 Okt 2023 | ID Transaksi: SHIP-9881",
-    visible: false,
-    avatarBg: "bg-[#f4d4e4] text-[#8b2558]"
-  },
-  {
-    id: "rv-3",
-    initials: "BW",
-    name: "Budi Wijaya",
-    stars: 5,
-    text: '"Harga paling kompetitif untuk kiriman logistik antar kota. Dashboard-nya sangat membantu UMKM seperti saya."',
-    meta: "08 Okt 2023 | ID Transaksi: SHIP-9870",
-    visible: true,
-    avatarBg: "bg-[#d5efd8] text-[#11623a]"
+  if (raw) {
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      data = { message: raw.slice(0, 180) || "Respons server tidak valid." };
+    }
   }
-];
 
-function inBrowser() {
-  return typeof window !== "undefined";
-}
-
-export function loadReviews() {
-  if (!inBrowser()) return [...DEFAULT_REVIEWS];
-  const raw = window.localStorage.getItem(STORAGE_KEY);
-  if (!raw) {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_REVIEWS));
-    return [...DEFAULT_REVIEWS];
+  if (!response.ok) {
+    throw new Error((data as { message?: string } | null)?.message || "Request ulasan gagal.");
   }
-  try {
-    const parsed = JSON.parse(raw) as ReviewItem[];
-    if (!Array.isArray(parsed) || parsed.length === 0) return [...DEFAULT_REVIEWS];
-    return parsed;
-  } catch {
-    return [...DEFAULT_REVIEWS];
-  }
+
+  return data as T;
 }
 
-export function saveReviews(rows: ReviewItem[]) {
-  if (!inBrowser()) return;
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(rows));
+export async function fetchReviewsFromDatabase(includeHidden = false) {
+  const response = await fetch(`/api/reviews${includeHidden ? "?includeHidden=1" : ""}`, {
+    cache: "no-store",
+    signal: AbortSignal.timeout(10000)
+  });
+  const data = await parseJsonResponse<{ reviews: ReviewItem[] }>(response);
+  return data.reviews;
 }
 
-export function createReview(name: string, text: string, stars: number) {
-  const now = Date.now();
-  const initials = name
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? "")
-    .join("") || "US";
-
-  const next: ReviewItem = {
-    id: `rv-${now}`,
-    initials,
-    name,
-    stars,
-    text: `"${text}"`,
-    meta: `${new Date(now).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" })} | ID Transaksi: SHIP-${String(now).slice(-4)}`,
-    visible: true,
-    avatarBg: "bg-[#d5efd8] text-[#11623a]"
-  };
-
-  const updated = [next, ...loadReviews()];
-  saveReviews(updated);
-  return updated;
+export async function createReviewInDatabase(name: string, text: string, stars: number) {
+  const response = await fetch("/api/reviews", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    signal: AbortSignal.timeout(10000),
+    body: JSON.stringify({ name, text, stars })
+  });
+  return parseJsonResponse<{ review: ReviewItem; reviewerToken: string }>(response);
 }
 
-export function updateReview(id: string, patch: Partial<ReviewItem>) {
-  const updated = loadReviews().map((row) => (row.id === id ? { ...row, ...patch } : row));
-  saveReviews(updated);
-  return updated;
+export async function updateReviewInDatabase(
+  id: string,
+  patch: { name?: string; text?: string; stars?: number; visible?: boolean; reviewerToken?: string }
+) {
+  const response = await fetch(`/api/reviews/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    signal: AbortSignal.timeout(10000),
+    body: JSON.stringify(patch)
+  });
+  const data = await parseJsonResponse<{ review: ReviewItem }>(response);
+  return data.review;
 }
 
-export function deleteReview(id: string) {
-  const updated = loadReviews().filter((row) => row.id !== id);
-  saveReviews(updated);
-  return updated;
+export async function deleteReviewFromDatabase(id: string, reviewerToken?: string) {
+  const params = reviewerToken ? `?reviewerToken=${encodeURIComponent(reviewerToken)}` : "";
+  const response = await fetch(`/api/reviews/${encodeURIComponent(id)}${params}`, {
+    method: "DELETE",
+    signal: AbortSignal.timeout(10000)
+  });
+  await parseJsonResponse<{ ok: boolean }>(response);
 }

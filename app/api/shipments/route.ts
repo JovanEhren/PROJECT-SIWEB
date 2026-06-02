@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { pool } from "@/lib/db";
+import { getCurrentAdminFromRequest } from "@/lib/server/admin-auth";
 import { CHECKPOINT_STATUS } from "@/lib/utils/checkpoint-shared";
 import { addCheckpoint, syncShipmentCheckpoints } from "@/lib/utils/checkpoint";
 import { getDemoTrackingDurationMs } from "@/lib/tracking-config";
@@ -18,6 +19,8 @@ type ShipmentRow = {
   destination_city: string;
   destination_province: string;
   destination_detail: string;
+  item_name: string | null;
+  item_category: string | null;
   package_type: string;
   item_status: string | null;
   item_note: string | null;
@@ -108,6 +111,8 @@ function mapRows(rows: ShipmentRow[], events: TrackingRow[]) {
       id: row.resi_code,
       uuid: row.id,
       type: row.service_code,
+      itemName: row.item_name || row.package_type,
+      itemCategory: row.item_category || row.package_type,
       sender: row.sender_name,
       receiver: row.receiver_name || "-",
       destination: `${row.origin_city} | ${row.destination_city}`,
@@ -161,7 +166,9 @@ async function loadShipments(search = "") {
     ? `WHERE s.resi_code ILIKE $1
         OR c.full_name ILIKE $1
         OR s.receiver_name ILIKE $1
-        OR s.package_type ILIKE $1`
+        OR s.package_type ILIKE $1
+        OR s.item_name ILIKE $1
+        OR s.item_category ILIKE $1`
     : "";
 
   const result = await pool.query<ShipmentRow>(
@@ -179,6 +186,8 @@ async function loadShipments(search = "") {
         da.city AS destination_city,
         da.province AS destination_province,
         da.detail_address AS destination_detail,
+        s.item_name,
+        s.item_category,
         s.package_type,
         s.item_status,
         s.item_note,
@@ -262,7 +271,11 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
+  const currentAdmin = await getCurrentAdminFromRequest(request);
   const resiCode = generateResi();
+  const itemName = String(body.itemName || "").trim();
+  const itemCategory = String(body.itemCategory || "").trim();
+  const packageType = itemCategory || String(body.packageType || "").trim() || "Barang Cargo";
   const serviceCode = String(body.service || "").toUpperCase() === "EKSPRES" ? "EKSPRES" : "REGULER";
   const durasiEstimasiMs =
     body.durasiEstimasiMs != null
@@ -271,6 +284,13 @@ export async function POST(request: NextRequest) {
   const estimatedArrivalAt = new Date(Date.now() + durasiEstimasiMs);
 
   try {
+    if (!itemName || !itemCategory) {
+      return NextResponse.json(
+        { message: "Nama barang dan jenis barang wajib diisi." },
+        { status: 400 }
+      );
+    }
+
     const customer = await pool.query<{ id: string }>(
       `
         INSERT INTO shipin_users (full_name, email, phone, role, password_hash)
@@ -336,7 +356,7 @@ export async function POST(request: NextRequest) {
         INSERT INTO shipin_shipments (
           resi_code, customer_id, service_id, origin_address_id, destination_address_id,
           package_category_id, origin_hub_id, destination_hub_id, vehicle_id, receiver_name,
-          receiver_phone, package_type, item_status, item_note, weight_kg, length_cm, width_cm,
+          created_by_admin_id, receiver_phone, package_type, item_name, item_category, item_status, item_note, weight_kg, length_cm, width_cm,
           height_cm, total_amount, payment_status, shipment_status, estimated_arrival_at,
           koordinat_asal_lat, koordinat_asal_lng, koordinat_tujuan_lat, koordinat_tujuan_lng,
           waktu_berangkat, durasi_estimasi_ms
@@ -344,9 +364,9 @@ export async function POST(request: NextRequest) {
         VALUES (
           $1, $2, $3, $4, $5,
           $6, $7, $8, $9, $10,
-          $11, $12, 'DIPROSES', $13, $14, $15, $16,
-          $17, $18, 'LUNAS', 'DIJADWALKAN', $19,
-          $20, $21, $22, $23, $24, $25
+          $11, $12, $13, $14, $15, 'DIPROSES', $16, $17, $18, $19,
+          $20, $21, 'LUNAS', 'DIJADWALKAN', $22,
+          $23, $24, $25, $26, $27, $28
         )
         RETURNING id
       `,
@@ -361,8 +381,11 @@ export async function POST(request: NextRequest) {
         destinationHub.rows[0]?.id || 1,
         vehicleId,
         String(body.receiverName || "").trim(),
+        currentAdmin?.id || null,
         String(body.receiverPhone || "").trim(),
-        String(body.packageType || "Barang Cargo").trim(),
+        packageType,
+        itemName,
+        itemCategory,
         String(body.itemNote || "").trim(),
         Number(body.weightKg) || 1,
         Number(body.lengthCm) || 0,

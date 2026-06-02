@@ -26,6 +26,8 @@ export type ShipmentRecord = {
   id: string;
   uuid?: string;
   type: string;
+  itemName?: string;
+  itemCategory?: string;
   sender: string;
   receiver: string;
   destination: string;
@@ -80,6 +82,8 @@ export type CreateShipmentPayload = {
   destinationProvince?: string;
   originCity?: string;
   destinationCity?: string;
+  originPostalCode?: string;
+  destinationPostalCode?: string;
   lengthCm?: number;
   widthCm?: number;
   heightCm?: number;
@@ -87,7 +91,8 @@ export type CreateShipmentPayload = {
   receiverPhone?: string;
   weightKg: number;
   service: ServiceType;
-  packageType?: string;
+  itemName: string;
+  itemCategory: string;
   itemNote?: string;
   deliveryType?: "BIASA" | "CEPAT" | "VVIP";
   vehicleId?: number;
@@ -602,9 +607,11 @@ export async function createShipmentInDatabase(payload: CreateShipmentPayload) {
       receiverPhone: payload.receiverPhone,
       originProvince: payload.originProvince,
       originCity: payload.originCity,
+      originPostalCode: payload.originPostalCode,
       originAddress: payload.pickupAddress,
       destinationProvince: payload.destinationProvince,
       destinationCity: payload.destinationCity,
+      destinationPostalCode: payload.destinationPostalCode,
       destinationAddress: payload.destinationAddress,
       weightKg: payload.weightKg,
       lengthCm: payload.lengthCm,
@@ -612,7 +619,9 @@ export async function createShipmentInDatabase(payload: CreateShipmentPayload) {
       heightCm: payload.heightCm,
       service: payload.service,
       deliveryType: payload.deliveryType || (payload.service === "EKSPRES" ? "CEPAT" : "BIASA"),
-      packageType: payload.packageType || "Barang Cargo",
+      packageType: payload.itemCategory || "Barang Cargo",
+      itemName: payload.itemName,
+      itemCategory: payload.itemCategory,
       itemNote: payload.itemNote || "",
       vehicleId: payload.vehicleId,
       totalAmount: estimateShippingCost({

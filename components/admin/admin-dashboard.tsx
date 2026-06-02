@@ -28,10 +28,17 @@ type ServiceType = "Reguler" | "Same-Day" | "Ekspres";
 
 type ShipmentRow = {
   id: string;
+  itemName?: string;
+  itemCategory?: string;
   sender: string;
+  senderPhone?: string;
   senderCity: string;
   receiver: string;
   receiverCity: string;
+  lengthCm?: number;
+  widthCm?: number;
+  heightCm?: number;
+  createdAt: number;
   dayIndex: number;
   status: ShipmentStatus;
   payment: PaymentStatus;
@@ -47,14 +54,56 @@ const paymentOptions = ["Semua", "Lunas", "Menunggu"] as const;
 const serviceOptions = ["Semua", "Reguler", "Same-Day", "Ekspres"] as const;
 const ITEMS_PER_PAGE = 5;
 
+function sensitiveBlurClass(isRevealed: boolean) {
+  return isRevealed ? "" : "blur-[4px] select-none";
+}
+
+function toDateInputValue(value: Date) {
+  const year = value.getFullYear();
+  const month = `${value.getMonth() + 1}`.padStart(2, "0");
+  const day = `${value.getDate()}`.padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function getDefaultDateRange() {
+  const end = new Date();
+  const start = new Date();
+  start.setDate(end.getDate() - 6);
+  return {
+    startDate: toDateInputValue(start),
+    endDate: toDateInputValue(end)
+  };
+}
+
+function toDayStart(value: string) {
+  return value ? new Date(`${value}T00:00:00`).getTime() : null;
+}
+
+function toDayEnd(value: string) {
+  return value ? new Date(`${value}T23:59:59.999`).getTime() : null;
+}
+
+function formatDateRangeLabel(startDate: string, endDate: string) {
+  const start = new Date(`${startDate}T00:00:00`);
+  const end = new Date(`${endDate}T00:00:00`);
+
+  return `${start.toLocaleDateString("id-ID", {
+    day: "2-digit",
+    month: "short"
+  })} - ${end.toLocaleDateString("id-ID", {
+    day: "2-digit",
+    month: "short"
+  })}`;
+}
+
 function formatCurrency(amount: number) {
   return `Rp ${amount.toLocaleString("id-ID")}`;
 }
 
-function statusPill(status: ShipmentStatus) {
-  if (status === "Selesai") return "bg-[#ddf8dc] text-[#1a8f37]";
-  if (status === "Pending") return "bg-[#ffe7de] text-[#d26b3f]";
-  return "bg-[#dff5dc] text-[#2d9a49]";
+function statusBadgeTone(status: ShipmentStatus) {
+  if (status === "Selesai") return "bg-[#28a745] text-white";
+  if (status === "Pending") return "bg-[#f59e0b] text-white";
+  return "bg-[#7c3aed] text-white";
 }
 
 function mapHistoryShipmentStatus(status: HistoryShipmentStatus): ShipmentStatus {
@@ -98,10 +147,17 @@ function mapShipmentRows(rows: ShipmentRecord[]): ShipmentRow[] {
     const dayIndex = ((new Date(row.createdAt).getDay() + 6) % 7) || 0;
     return {
       id: row.id,
+      itemName: row.itemName,
+      itemCategory: row.itemCategory,
       sender: row.sender,
+      senderPhone: row.senderPhone,
       senderCity: row.originCity || extractCityFromAddress(row.senderAddress),
       receiver: row.receiver,
       receiverCity: row.destinationCity || extractCityFromAddress(row.receiverAddress),
+      lengthCm: row.lengthCm,
+      widthCm: row.widthCm,
+      heightCm: row.heightCm,
+      createdAt: row.createdAt,
       dayIndex,
       status: mapHistoryShipmentStatus(row.shipment),
       payment: mapHistoryPaymentStatus(row.payment),
@@ -136,9 +192,13 @@ export function AdminDashboard() {
   const [statusFilter, setStatusFilter] = useState<(typeof statusOptions)[number]>("Semua");
   const [paymentFilter, setPaymentFilter] = useState<(typeof paymentOptions)[number]>("Semua");
   const [serviceFilter, setServiceFilter] = useState<(typeof serviceOptions)[number]>("Semua");
-  const [activeWindow, setActiveWindow] = useState("7 Hari Terakhir");
+  const defaultDateRange = getDefaultDateRange();
+  const [startDate, setStartDate] = useState(defaultDateRange.startDate);
+  const [endDate, setEndDate] = useState(defaultDateRange.endDate);
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [selectedShipmentId, setSelectedShipmentId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [revealedRows, setRevealedRows] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     let active = true;
@@ -161,6 +221,9 @@ export function AdminDashboard() {
     shipmentRows.find((shipment) => shipment.id === selectedShipmentId) ?? shipmentRows[0] ?? null;
 
   const filteredShipments = useMemo(() => {
+    const startAt = toDayStart(startDate);
+    const endAt = toDayEnd(endDate);
+
     return shipmentRows.filter((shipment) => {
       const query = search.trim().toLowerCase();
       const matchesSearch =
@@ -172,17 +235,20 @@ export function AdminDashboard() {
       const matchesStatus = statusFilter === "Semua" || shipment.status === statusFilter;
       const matchesPayment = paymentFilter === "Semua" || shipment.payment === paymentFilter;
       const matchesService = serviceFilter === "Semua" || shipment.service === serviceFilter;
+      const matchesDate =
+        (!startAt || shipment.createdAt >= startAt) &&
+        (!endAt || shipment.createdAt <= endAt);
 
-      return matchesSearch && matchesStatus && matchesPayment && matchesService;
+      return matchesSearch && matchesStatus && matchesPayment && matchesService && matchesDate;
     });
-  }, [paymentFilter, search, serviceFilter, shipmentRows, statusFilter]);
+  }, [endDate, paymentFilter, search, serviceFilter, shipmentRows, startDate, statusFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filteredShipments.length / ITEMS_PER_PAGE));
   const paginatedShipments = filteredShipments.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [paymentFilter, search, serviceFilter, statusFilter]);
+  }, [endDate, paymentFilter, search, serviceFilter, startDate, statusFilter]);
 
   useEffect(() => {
     if (currentPage > totalPages) {
@@ -200,17 +266,16 @@ export function AdminDashboard() {
       const serviceWeight =
         shipment.service === "Same-Day" ? 36 : shipment.service === "Ekspres" ? 48 : 20;
       const paymentMultiplier = shipment.payment === "Lunas" ? 1 : 0.45;
-      const rangeMultiplier = activeWindow === "30 Hari" ? 3.2 : 1;
 
-      packageSeries[shipment.dayIndex] += Math.round((statusWeight + serviceWeight) * rangeMultiplier);
-      revenueSeries[shipment.dayIndex] += shipment.amount * paymentMultiplier * rangeMultiplier;
+      packageSeries[shipment.dayIndex] += Math.round(statusWeight + serviceWeight);
+      revenueSeries[shipment.dayIndex] += shipment.amount * paymentMultiplier;
     });
 
     return {
       weeklyPackages: packageSeries,
       weeklyRevenue: revenueSeries.map((value) => Number((value / 1_000_000).toFixed(2)))
     };
-  }, [activeWindow, shipmentRows]);
+  }, [filteredShipments]);
 
   const totals = useMemo(() => {
     const revenue = filteredShipments.reduce((sum, row) => sum + row.amount, 0);
@@ -239,6 +304,13 @@ export function AdminDashboard() {
     });
     setShipmentRows(mapShipmentRows(updated));
     setSelectedShipmentId(id);
+  }
+
+  function toggleSensitiveRow(id: string) {
+    setRevealedRows((current) => ({
+      ...current,
+      [id]: !current[id]
+    }));
   }
 
   function printShipmentLabel() {
@@ -492,13 +564,60 @@ export function AdminDashboard() {
                   <option key={option}>{option}</option>
                 ))}
               </select>
-              <button
-                type="button"
-                onClick={() => setActiveWindow(activeWindow === "7 Hari Terakhir" ? "30 Hari" : "7 Hari Terakhir")}
-                className="rounded-full bg-white px-4 py-3 text-sm font-semibold text-[#505850] shadow-[0_10px_24px_rgba(155,184,143,0.14)]"
-              >
-                {activeWindow}
-              </button>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setIsDatePickerOpen((current) => !current)}
+                  className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-3 text-sm font-semibold text-[#505850] shadow-[0_10px_24px_rgba(155,184,143,0.14)]"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4 text-[#6b766b]">
+                    <path d="M8 2v4M16 2v4M3 10h18" />
+                    <rect x="3" y="4" width="18" height="17" rx="3" />
+                  </svg>
+                  <span>{formatDateRangeLabel(startDate, endDate)}</span>
+                </button>
+
+                {isDatePickerOpen ? (
+                  <div className="absolute right-0 top-[calc(100%+10px)] z-20 w-[260px] rounded-[22px] border border-[#e2e9df] bg-white p-4 shadow-[0_20px_34px_rgba(155,184,143,0.2)]">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#7b867d]">
+                      Filter Tanggal
+                    </p>
+                    <div className="mt-3 space-y-3">
+                      <label className="block">
+                        <span className="mb-1 block text-[11px] font-semibold text-[#6a746b]">Mulai</span>
+                        <input
+                          type="date"
+                          value={startDate}
+                          max={endDate}
+                          onChange={(event) => setStartDate(event.target.value)}
+                          className="w-full rounded-[14px] border border-[#dfe7dd] px-3 py-2 text-[13px] outline-none"
+                          aria-label="Tanggal mulai"
+                        />
+                      </label>
+                      <label className="block">
+                        <span className="mb-1 block text-[11px] font-semibold text-[#6a746b]">Sampai</span>
+                        <input
+                          type="date"
+                          value={endDate}
+                          min={startDate}
+                          onChange={(event) => setEndDate(event.target.value)}
+                          className="w-full rounded-[14px] border border-[#dfe7dd] px-3 py-2 text-[13px] outline-none"
+                          aria-label="Tanggal akhir"
+                        />
+                      </label>
+                    </div>
+                    <div className="mt-4 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => setIsDatePickerOpen(false)}
+                        className="rounded-full border border-[#dfe7dd] px-3 py-2 text-[12px] font-semibold text-[#566156]"
+                      >
+                        Tutup
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
             </div>
           </div>
 
@@ -509,6 +628,7 @@ export function AdminDashboard() {
                   <tr>
                     <th className="px-6 py-4">Resi</th>
                     <th className="px-6 py-4">Pengirim</th>
+                    <th className="px-6 py-4">Telepon</th>
                     <th className="px-6 py-4">Penerima</th>
                     <th className="px-6 py-4">Status</th>
                     <th className="px-6 py-4">Total</th>
@@ -522,18 +642,25 @@ export function AdminDashboard() {
                         <button
                           type="button"
                           onClick={() => setSelectedShipmentId(shipment.id)}
-                          className="font-bold text-[#2b8b45]"
+                          className={`font-bold text-[#2b8b45] transition ${sensitiveBlurClass(Boolean(revealedRows[shipment.id]))}`}
                         >
                           {shipment.id}
                         </button>
                       </td>
                       <td className="px-6 py-5">
-                        <p className="font-semibold text-[#2a332b]">{shipment.sender}</p>
-                        <p className="text-sm text-[#8a938a]">{shipment.senderCity}</p>
+                        <p className={`font-semibold text-[#2a332b] transition ${sensitiveBlurClass(Boolean(revealedRows[shipment.id]))}`}>{shipment.sender}</p>
+                        <p className={`text-sm text-[#8a938a] transition ${sensitiveBlurClass(Boolean(revealedRows[shipment.id]))}`}>{shipment.senderCity}</p>
                       </td>
                       <td className="px-6 py-5">
-                        <p className="font-semibold text-[#2a332b]">{shipment.receiver}</p>
-                        <p className="text-sm text-[#8a938a]">{shipment.receiverCity}</p>
+                        <span
+                          className={`inline-block text-sm text-[#556055] transition ${sensitiveBlurClass(Boolean(revealedRows[shipment.id]))}`}
+                        >
+                          {shipment.senderPhone || "-"}
+                        </span>
+                      </td>
+                      <td className="px-6 py-5">
+                        <p className={`font-semibold text-[#2a332b] transition ${sensitiveBlurClass(Boolean(revealedRows[shipment.id]))}`}>{shipment.receiver}</p>
+                        <p className={`text-sm text-[#8a938a] transition ${sensitiveBlurClass(Boolean(revealedRows[shipment.id]))}`}>{shipment.receiverCity}</p>
                       </td>
                       <td className="px-6 py-5">
                         <select
@@ -541,21 +668,22 @@ export function AdminDashboard() {
                           onChange={(event) =>
                             updateShipmentStatus(shipment.id, event.target.value as ShipmentStatus)
                           }
-                          className={`rounded-full px-3 py-1.5 text-xs font-bold outline-none ${statusPill(shipment.status)}`}
+                          className={`inline-flex rounded-full px-3 py-1.5 text-xs font-bold outline-none transition ${statusBadgeTone(shipment.status)} ${sensitiveBlurClass(Boolean(revealedRows[shipment.id]))}`}
                         >
-                          <option value="Dikirim">DIKIRIM</option>
-                          <option value="Selesai">SELESAI</option>
-                          <option value="Pending">PENDING</option>
+                          <option value="Dikirim">Dikirim</option>
+                          <option value="Selesai">Selesai</option>
+                          <option value="Pending">Pending</option>
                         </select>
                       </td>
-                      <td className="px-6 py-5 font-semibold text-[#444d44]">
+                      <td className={`px-6 py-5 font-semibold text-[#444d44] transition ${sensitiveBlurClass(Boolean(revealedRows[shipment.id]))}`}>
                         {formatCurrency(shipment.amount)}
                       </td>
                       <td className="px-6 py-5">
                         <button
                           type="button"
-                          onClick={() => setSelectedShipmentId(shipment.id)}
+                          onClick={() => toggleSensitiveRow(shipment.id)}
                           className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-[#eef9e8] text-[#2f9344]"
+                          aria-label={revealedRows[shipment.id] ? "Sembunyikan data sensitif" : "Tampilkan data sensitif"}
                         >
                           <EyeIcon className="h-4 w-4" />
                         </button>
@@ -626,6 +754,7 @@ export function AdminDashboard() {
                   <p className="text-xs uppercase tracking-[0.18em] text-[#8e988f]">Pengirim</p>
                   <p className="mt-2 font-semibold text-[#2a332b]">{selectedShipment.sender}</p>
                   <p className="text-sm text-[#7e887f]">{selectedShipment.senderCity}</p>
+                  <p className="text-sm text-[#7e887f]">{selectedShipment.senderPhone || "-"}</p>
                 </div>
                 <div className="rounded-[22px] bg-[#f4f8f1] p-4">
                   <p className="text-xs uppercase tracking-[0.18em] text-[#8e988f]">Penerima</p>
@@ -636,6 +765,22 @@ export function AdminDashboard() {
                   <p className="text-xs uppercase tracking-[0.18em] text-[#8e988f]">Layanan</p>
                   <p className="mt-2 font-semibold text-[#2a332b]">{selectedShipment.service}</p>
                   <p className="text-sm text-[#7e887f]">{formatCurrency(selectedShipment.amount)}</p>
+                </div>
+              </div>
+              <div className="mt-4 grid gap-4 md:grid-cols-3">
+                <div className="rounded-[22px] bg-[#f4f8f1] p-4">
+                  <p className="text-xs uppercase tracking-[0.18em] text-[#8e988f]">Nama Barang</p>
+                  <p className="mt-2 font-semibold text-[#2a332b]">{selectedShipment.itemName || "-"}</p>
+                </div>
+                <div className="rounded-[22px] bg-[#f4f8f1] p-4">
+                  <p className="text-xs uppercase tracking-[0.18em] text-[#8e988f]">Jenis Barang</p>
+                  <p className="mt-2 font-semibold text-[#2a332b]">{selectedShipment.itemCategory || "-"}</p>
+                </div>
+                <div className="rounded-[22px] bg-[#f4f8f1] p-4">
+                  <p className="text-xs uppercase tracking-[0.18em] text-[#8e988f]">Dimensi</p>
+                  <p className="mt-2 font-semibold text-[#2a332b]">
+                    {selectedShipment.lengthCm || 0} x {selectedShipment.widthCm || 0} x {selectedShipment.heightCm || 0} cm
+                  </p>
                 </div>
               </div>
             </article>

@@ -16,6 +16,8 @@ type ShipmentRow = {
   destination_city: string;
   destination_province: string;
   destination_detail: string;
+  item_name: string | null;
+  item_category: string | null;
   package_type: string;
   item_status: string | null;
   item_note: string | null;
@@ -105,6 +107,8 @@ function mapShipment(row: ShipmentRow, events: TrackingRow[]) {
     id: row.resi_code,
     uuid: row.id,
     type: row.service_code,
+    itemName: row.item_name || row.package_type,
+    itemCategory: row.item_category || row.package_type,
     sender: row.sender_name,
     receiver: row.receiver_name || "-",
     destination: `${row.origin_city} | ${row.destination_city}`,
@@ -194,6 +198,8 @@ export async function GET(request: NextRequest) {
           da.city AS destination_city,
           da.province AS destination_province,
           da.detail_address AS destination_detail,
+          s.item_name,
+          s.item_category,
           s.package_type,
           s.item_status,
           s.item_note,

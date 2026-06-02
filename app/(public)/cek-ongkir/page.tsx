@@ -1,7 +1,13 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 
 import { CekOngkirPage } from "@/components/public/cek-ongkir-page";
 import { PublicNavbar } from "@/components/public/navbar";
+
+export const metadata: Metadata = {
+  title: "Cek Ongkir | SHIPIN GO",
+  description: "Bandingkan tarif pengiriman SHIPIN GO secara cepat."
+};
 
 function LoadingFallback() {
   return (

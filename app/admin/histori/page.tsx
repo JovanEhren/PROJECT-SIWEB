@@ -61,6 +61,10 @@ function TrashIcon() {
 
 const ITEMS_PER_PAGE = 5;
 
+function sensitiveBlurClass(isRevealed: boolean) {
+  return isRevealed ? "" : "blur-[4px] select-none";
+}
+
 function LoadingFallback() {
   return (
     <main className="min-h-[calc(100vh-80px)] bg-[#f2f5f1] px-4 py-5 sm:px-6 lg:px-8">
@@ -80,6 +84,7 @@ function AdminHistoriContent() {
   const [messageTone, setMessageTone] = useState<"info" | "success">("info");
   const [vehicles, setVehicles] = useState<VehicleOption[]>([]);
   const [loading, setLoading] = useState(true);
+  const [revealedRows, setRevealedRows] = useState<Record<string, boolean>>({});
 
   async function hydrateShipments() {
     const current = await fetchShipmentsFromDatabase();
@@ -92,6 +97,10 @@ function AdminHistoriContent() {
       return current[0]?.id ?? null;
     });
   }
+
+  useEffect(() => {
+    document.title = "Histori Pengiriman | SHIPIN GO Admin";
+  }, []);
 
   useEffect(() => {
     async function hydrate() {
@@ -140,7 +149,9 @@ function AdminHistoriContent() {
         row.sender.toLowerCase().includes(keyword) ||
         row.receiver.toLowerCase().includes(keyword) ||
         row.destination.toLowerCase().includes(keyword) ||
-        (row.type || "").toLowerCase().includes(keyword)
+        (row.type || "").toLowerCase().includes(keyword) ||
+        (row.itemName || "").toLowerCase().includes(keyword) ||
+        (row.itemCategory || "").toLowerCase().includes(keyword)
       );
     });
   }, [query, rows]);
@@ -190,6 +201,13 @@ function AdminHistoriContent() {
       setMessageTone("info");
       setMessage(error instanceof Error ? error.message : "Data gagal dihapus.");
     }
+  }
+
+  function toggleSensitiveRow(id: string) {
+    setRevealedRows((current) => ({
+      ...current,
+      [id]: !current[id]
+    }));
   }
 
   return (
@@ -259,23 +277,23 @@ function AdminHistoriContent() {
                       <button
                         type="button"
                         onClick={() => setSelectedId(row.id)}
-                        className="text-[13px] font-extrabold text-[#148a31] whitespace-nowrap"
+                        className={`text-[13px] font-extrabold text-[#148a31] whitespace-nowrap transition ${sensitiveBlurClass(Boolean(revealedRows[row.id]))}`}
                       >
                         #{row.id}
                       </button>
-                      <p className="text-[10px] uppercase tracking-[0.05em] text-[#6a756c]">{row.type}</p>
+                      <p className={`text-[10px] uppercase tracking-[0.05em] text-[#6a756c] transition ${sensitiveBlurClass(Boolean(revealedRows[row.id]))}`}>{row.type}</p>
                     </td>
 
                     <td className="px-3 py-3">
-                      <p className="text-[13px] font-bold text-[#243526] whitespace-nowrap">{row.sender}</p>
-                      <p className="text-[11px] text-[#5e695f] whitespace-nowrap">ke {row.receiver}</p>
+                      <p className={`text-[13px] font-bold text-[#243526] whitespace-nowrap transition ${sensitiveBlurClass(Boolean(revealedRows[row.id]))}`}>{row.sender}</p>
+                      <p className={`text-[11px] text-[#5e695f] whitespace-nowrap transition ${sensitiveBlurClass(Boolean(revealedRows[row.id]))}`}>ke {row.receiver}</p>
                     </td>
 
-                    <td className="px-3 py-3 text-[12px] text-[#2b362c] whitespace-nowrap">{row.destination}</td>
-                    <td className="px-3 py-3 text-[12px] text-[#2b362c] whitespace-nowrap">{row.date}</td>
+                    <td className={`px-3 py-3 text-[12px] text-[#2b362c] whitespace-nowrap transition ${sensitiveBlurClass(Boolean(revealedRows[row.id]))}`}>{row.destination}</td>
+                    <td className={`px-3 py-3 text-[12px] text-[#2b362c] whitespace-nowrap transition ${sensitiveBlurClass(Boolean(revealedRows[row.id]))}`}>{row.date}</td>
 
                     <td className="px-3 py-3">
-                      <div className="flex flex-col gap-1">
+                      <div className={`flex flex-col gap-1 transition ${sensitiveBlurClass(Boolean(revealedRows[row.id]))}`}>
                         <select
                           value={row.payment}
                           onChange={(event) =>
@@ -299,58 +317,60 @@ function AdminHistoriContent() {
                     </td>
 
                     <td className="px-3 py-3">
-                      <select
-                        value={row.itemStatus || "DIPROSES"}
-                        onChange={(event) => handleUpdateShipment(row.id, { itemStatus: event.target.value })}
-                        className={`rounded-full px-2 py-1 text-[9px] font-bold outline-none cursor-pointer ${
-                          badgeStyles[row.itemStatus || "DIPROSES"] || "bg-[#f3f6f3] text-[#415046]"
-                        }`}
-                      >
-                        <option value="DIPROSES">DIPROSES</option>
-                        <option value="DALAM_PENGIRIMAN">DALAM PENGIRIMAN</option>
-                        <option value="SAMPAI_TUJUAN">SAMPAI TUJUAN</option>
-                        <option value="PENDING">PENDING</option>
-                        <option value="SELESAI">SELESAI</option>
-                      </select>
-                      <p className="mt-1 text-[9px] text-[#738076] max-w-[120px] truncate">{row.itemNote || "-"}</p>
+                      <div className={`transition ${sensitiveBlurClass(Boolean(revealedRows[row.id]))}`}>
+                        <select
+                          value={row.itemStatus || "DIPROSES"}
+                          onChange={(event) => handleUpdateShipment(row.id, { itemStatus: event.target.value })}
+                          className={`rounded-full px-2 py-1 text-[9px] font-bold outline-none cursor-pointer ${
+                            badgeStyles[row.itemStatus || "DIPROSES"] || "bg-[#f3f6f3] text-[#415046]"
+                          }`}
+                        >
+                          <option value="DIPROSES">DIPROSES</option>
+                          <option value="DALAM_PENGIRIMAN">DALAM PENGIRIMAN</option>
+                          <option value="SAMPAI_TUJUAN">SAMPAI TUJUAN</option>
+                          <option value="PENDING">PENDING</option>
+                          <option value="SELESAI">SELESAI</option>
+                        </select>
+                        <p className="mt-1 max-w-[120px] truncate text-[9px] text-[#738076]">{row.itemNote || "-"}</p>
+                      </div>
                     </td>
 
                     <td className="px-3 py-3">
-                      <select
-                        value={row.vehicleId ? String(row.vehicleId) : ""}
-                        onChange={(event) => handleUpdateShipment(row.id, { vehicleId: Number(event.target.value) })}
-                        className="w-[150px] rounded-lg border border-[#d8e0d8] bg-[#f6f8f4] px-2 py-1.5 text-[10px] text-[#2a372f] outline-none cursor-pointer"
-                      >
-                        <option value="">Pilih kendaraan</option>
-                        {vehicles.map((vehicle) => (
-                          <option key={vehicle.id} value={vehicle.id}>
-                            {vehicle.vehicle_name} - {vehicle.plate_number}
-                          </option>
-                        ))}
-                      </select>
+                      <div className={`transition ${sensitiveBlurClass(Boolean(revealedRows[row.id]))}`}>
+                        <select
+                          value={row.vehicleId ? String(row.vehicleId) : ""}
+                          onChange={(event) => handleUpdateShipment(row.id, { vehicleId: Number(event.target.value) })}
+                          className="w-[150px] rounded-lg border border-[#d8e0d8] bg-[#f6f8f4] px-2 py-1.5 text-[10px] text-[#2a372f] outline-none cursor-pointer"
+                        >
+                          <option value="">Pilih kendaraan</option>
+                          {vehicles.map((vehicle) => (
+                            <option key={vehicle.id} value={vehicle.id}>
+                              {vehicle.vehicle_name} - {vehicle.plate_number}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                     </td>
 
                     <td className="px-3 py-3">
-                      <input
-                        defaultValue={row.total}
-                        onBlur={(event) => {
-                          const nextTotal = Number(event.target.value);
-                          if (Number.isFinite(nextTotal) && nextTotal !== row.total) {
-                            handleUpdateShipment(row.id, { total: nextTotal });
-                          }
-                        }}
-                        className="w-[100px] rounded-lg border border-[#d8e0d8] bg-[#f6f8f4] px-2 py-1.5 text-[11px] font-extrabold text-[#2a362c] outline-none"
-                      />
-                      <p className="mt-0.5 text-[9px] text-[#748076]">{formatCurrency(row.total)}</p>
+                      <div className={`transition ${sensitiveBlurClass(Boolean(revealedRows[row.id]))}`}>
+                        <input
+                          value={String(row.total)}
+                          readOnly
+                          disabled
+                          className="w-[100px] cursor-not-allowed rounded-lg border border-[#d8e0d8] bg-[#eef2ec] px-2 py-1.5 text-[11px] font-extrabold text-[#2a362c] outline-none disabled:opacity-100"
+                        />
+                        <p className="mt-0.5 text-[9px] text-[#748076]">{formatCurrency(row.total)}</p>
+                      </div>
                     </td>
 
                     <td className="px-3 py-3">
                       <div className="flex items-center gap-1.5">
                         <button
                           type="button"
-                          onClick={() => setSelectedId(row.id)}
+                          onClick={() => toggleSensitiveRow(row.id)}
                           className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#f0f4ef] text-[#47604f] transition-colors hover:bg-[#e4ebe3]"
-                          aria-label="Pilih data"
+                          aria-label={revealedRows[row.id] ? "Sembunyikan data" : "Tampilkan data"}
                         >
                           <EyeIcon className="h-3.5 w-3.5" />
                         </button>
@@ -526,12 +546,26 @@ function AdminHistoriContent() {
                 <p className="mt-0.5 font-bold text-[#203229]">{selectedRow.type}</p>
               </div>
               <div>
+                <p className="font-bold text-[#6d786f] uppercase tracking-[0.05em]">Nama Barang</p>
+                <p className="mt-0.5 font-bold text-[#203229]">{selectedRow.itemName || "-"}</p>
+              </div>
+              <div>
+                <p className="font-bold text-[#6d786f] uppercase tracking-[0.05em]">Jenis Barang</p>
+                <p className="mt-0.5 font-bold text-[#203229]">{selectedRow.itemCategory || "-"}</p>
+              </div>
+              <div>
                 <p className="font-bold text-[#6d786f] uppercase tracking-[0.05em]">Layanan</p>
                 <p className="mt-0.5 font-bold text-[#203229]">{selectedRow.service || selectedRow.type}</p>
               </div>
               <div>
                 <p className="font-bold text-[#6d786f] uppercase tracking-[0.05em]">Total</p>
                 <p className="mt-0.5 font-bold text-[#148a31]">{formatCurrency(selectedRow.total)}</p>
+              </div>
+              <div>
+                <p className="font-bold text-[#6d786f] uppercase tracking-[0.05em]">Dimensi</p>
+                <p className="mt-0.5 font-bold text-[#203229]">
+                  {selectedRow.lengthCm || 0} x {selectedRow.widthCm || 0} x {selectedRow.heightCm || 0} cm
+                </p>
               </div>
               <div>
                 <p className="font-bold text-[#6d786f] uppercase tracking-[0.05em]">Pembayaran</p>

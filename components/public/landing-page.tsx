@@ -110,22 +110,23 @@ export function LandingPage() {
       <ScrollReveal />
       <section
         id="beranda"
-        className="shell grid gap-10 py-10 lg:grid-cols-[1.02fr_0.86fr] lg:items-center lg:py-14"
+        className="shell grid gap-8 py-10 lg:grid-cols-[1fr_0.9fr] lg:items-center lg:py-14 xl:gap-10"
       >
-        <div className="reveal-on-scroll rounded-[30px] bg-hero-glow p-5 sm:rounded-[34px] sm:p-8 lg:p-8 xl:p-10">
+        <div className="reveal-on-scroll rounded-[30px] bg-hero-glow px-5 py-6 sm:rounded-[34px] sm:px-8 sm:py-8 lg:px-5 lg:py-8 xl:px-6 xl:py-9">
           <div className="inline-flex items-center gap-2 rounded-full border border-[#d6efd3] bg-[#effbea] px-3.5 py-2 text-[11px] font-semibold text-shipin-deep shadow-[0_8px_18px_rgba(179,219,168,0.16)] sm:px-4 sm:text-[13px]">
             <span className="h-2.5 w-2.5 rounded-full bg-shipin-deep" />
             Revolusi Logistik Terpercaya
           </div>
-          <h1 className="mt-7 max-w-[640px] text-[34px] font-extrabold leading-[0.98] tracking-[-0.05em] text-shipin-ink min-[390px]:text-[38px] sm:mt-10 sm:text-[54px] lg:text-[76px] xl:text-[88px]">
-            <span className="block">Kirim barang</span>
-            <span className="mt-2 block text-shipin-deep sm:mt-3">tanpa drama.</span>
+          <h1 className="mt-7 max-w-[520px] text-[34px] font-extrabold leading-[0.88] tracking-[-0.065em] text-shipin-ink min-[390px]:text-[38px] sm:mt-10 sm:max-w-[560px] sm:text-[56px] lg:max-w-[560px] lg:text-[86px] xl:max-w-[600px] xl:text-[98px]">
+            <span className="block whitespace-nowrap">Kirim barang</span>
+            <span className="mt-2 block text-shipin-deep sm:mt-3">tanpa</span>
+            <span className="-mt-1 block text-shipin-deep sm:-mt-2">drama.</span>
           </h1>
-          <p className="mt-5 max-w-[620px] text-[14px] leading-[1.7] text-[#666d68] min-[390px]:text-[15px] sm:mt-8 sm:text-[19px] lg:text-[20px]">
+          <p className="mt-6 max-w-[520px] text-[14px] leading-[1.7] text-[#666d68] min-[390px]:text-[15px] sm:mt-8 sm:max-w-[560px] sm:text-[19px] lg:max-w-[520px] lg:text-[20px]">
             Pengalaman pengiriman modern yang transparan, aman, dan tepat waktu untuk
             kebutuhan bisnis maupun individu Anda.
           </p>
-          <div className="mt-7 flex max-w-[700px] flex-col gap-2.5 rounded-[24px] bg-white/94 p-2 shadow-[0_16px_34px_rgba(173,202,164,0.28)] sm:mt-10 sm:rounded-[30px] sm:flex-row sm:items-center sm:gap-3">
+          <div className="mt-7 flex max-w-[690px] flex-col gap-2.5 rounded-[24px] bg-white/94 p-2 shadow-[0_16px_34px_rgba(173,202,164,0.28)] sm:mt-10 sm:rounded-[30px] sm:flex-row sm:items-center sm:gap-3">
             <div className="flex flex-1 items-center gap-2.5 rounded-full border border-[#eceee4] bg-white px-4 py-3 text-[13px] text-[#b0b6ab] min-[390px]:text-[14px] sm:px-6 sm:text-[15px]">
               <SearchIcon className="h-4 w-4 text-[#9fc4a0]" />
               <input
@@ -316,7 +317,7 @@ export function LandingPage() {
                 Dipercaya bisnis yang butuh operasional ringkas.
               </h2>
             </div>
-            <Link href="/login" className="text-sm font-semibold text-shipin-deep hover:text-[#12572f]">
+            <Link href="/admin/login" className="text-sm font-semibold text-shipin-deep hover:text-[#12572f]">
               Masuk ke admin untuk mengelola ulasan
             </Link>
           </div>
@@ -446,28 +447,13 @@ export function LandingPage() {
           <div className="flex flex-col gap-4 pt-7 text-[14px] text-shipin-text sm:flex-row sm:items-center sm:justify-between">
             <p>© 2024 SHIPIN GO. Hak Cipta Dilindungi.</p>
             <div className="flex gap-6">
-              <a
-                href="https://www.instagram.com/"
-                target="_blank"
-                rel="noreferrer"
-                className="hover:text-shipin-deep"
-              >
+              <a href="https://www.instagram.com/" target="_blank" rel="noreferrer" className="hover:text-shipin-deep">
                 Instagram
               </a>
-              <a
-                href="https://www.linkedin.com/"
-                target="_blank"
-                rel="noreferrer"
-                className="hover:text-shipin-deep"
-              >
+              <a href="https://www.linkedin.com/" target="_blank" rel="noreferrer" className="hover:text-shipin-deep">
                 LinkedIn
               </a>
-              <a
-                href="https://x.com/"
-                target="_blank"
-                rel="noreferrer"
-                className="hover:text-shipin-deep"
-              >
+              <a href="https://x.com/" target="_blank" rel="noreferrer" className="hover:text-shipin-deep">
                 Twitter
               </a>
             </div>

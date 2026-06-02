@@ -1,3 +1,7 @@
+"use client";
+
+import { usePathname } from "next/navigation";
+
 import { AdminTopNavbar } from "@/components/admin/admin-top-navbar";
 
 export default function AdminLayout({
@@ -5,9 +9,12 @@ export default function AdminLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const pathname = usePathname();
+  const showNavbar = pathname !== "/admin/login";
+
   return (
     <>
-      <AdminTopNavbar />
+      {showNavbar ? <AdminTopNavbar /> : null}
       {children}
     </>
   );

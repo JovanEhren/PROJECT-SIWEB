@@ -1,15 +1,19 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 
 import { ShieldIcon, StarIcon, TruckIcon, UserIcon } from "@/components/icons";
 import { AdminLogoutButton } from "@/components/admin/admin-logout-button";
 
-const stats = [
-  { label: "TOTAL PENGIRIMAN", value: "124", tone: "bg-[#d9f2d6]", icon: "truck" },
-  { label: "RATING PENGIRIM", value: "4.9", tone: "bg-[#e3e7df]", icon: "star" },
-  { label: "STATUS AKUN", value: "Aktif", tone: "bg-[#d9f2d6]", icon: "shield" }
-];
+type ProfilePayload = {
+  id: string;
+  fullName: string;
+  username: string;
+  email: string;
+  status: string;
+  totalShipments: number;
+  rating: number;
+};
 
 function RowLabel({ children }: { children: React.ReactNode }) {
   return <p className="mb-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-[#24463a]">{children}</p>;
@@ -95,29 +99,109 @@ function LoadingFallback() {
 }
 
 function AdminProfilContent() {
-  const [fullName, setFullName] = useState("Bagus Arya");
-  const [email, setEmail] = useState("bagus.santoso@email.com");
-  const [currentPassword, setCurrentPassword] = useState("password");
-  const [newPassword, setNewPassword] = useState("password");
-  const [confirmPassword, setConfirmPassword] = useState("password");
+  const [profile, setProfile] = useState<ProfilePayload | null>(null);
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [language, setLanguage] = useState("Bahasa Indonesia (Default)");
   const [message, setMessage] = useState("");
   const [messageTone, setMessageTone] = useState<"error" | "success" | "info">("info");
+  const [isProfileSaving, setIsProfileSaving] = useState(false);
+  const [isPasswordSaving, setIsPasswordSaving] = useState(false);
 
-  function updateEmail() {
-    if (!email.trim() || !email.includes("@")) {
+  const stats = [
+    { label: "TOTAL PENGIRIMAN", value: String(profile?.totalShipments ?? 0), tone: "bg-[#d9f2d6]", icon: "truck" },
+    { label: "RATING PENGIRIM", value: (profile?.rating ?? 0).toFixed(1), tone: "bg-[#e3e7df]", icon: "star" },
+    { label: "STATUS AKUN", value: profile?.status || "AKTIF", tone: "bg-[#d9f2d6]", icon: "shield" }
+  ];
+
+  useEffect(() => {
+    document.title = "Profil Akun | SHIPIN GO Admin";
+  }, []);
+
+  useEffect(() => {
+    const savedLanguage = window.localStorage.getItem("shipin_admin_language");
+    if (savedLanguage) {
+      setLanguage(savedLanguage);
+    }
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadProfile() {
+      try {
+        const response = await fetch("/api/admin/profile", { cache: "no-store" });
+        const data = (await response.json()) as { profile?: ProfilePayload; message?: string };
+
+        if (!response.ok || !data.profile) {
+          throw new Error(data.message || "Gagal memuat profil admin.");
+        }
+
+        if (!active) return;
+        setProfile(data.profile);
+        setFullName(data.profile.fullName);
+        setEmail(data.profile.email);
+      } catch (error) {
+        if (!active) return;
+        setMessageTone("error");
+        setMessage(error instanceof Error ? error.message : "Gagal memuat profil admin.");
+      }
+    }
+
+    void loadProfile();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  async function updateEmail() {
+    if (!fullName.trim()) {
+      setMessageTone("error");
+      setMessage("Nama lengkap tidak boleh kosong.");
+      return;
+    }
+    if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setMessageTone("error");
       setMessage("Email tidak valid.");
       return;
     }
-    setMessageTone("success");
-    setMessage("Email berhasil diperbarui.");
+
+    setIsProfileSaving(true);
+    try {
+      const response = await fetch("/api/admin/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fullName,
+          email
+        })
+      });
+      const data = (await response.json()) as { profile?: ProfilePayload; message?: string };
+
+      if (!response.ok || !data.profile) {
+        throw new Error(data.message || "Gagal memperbarui detail akun.");
+      }
+
+      setProfile(data.profile);
+      setFullName(data.profile.fullName);
+      setEmail(data.profile.email);
+      setMessageTone("success");
+      setMessage("Detail akun berhasil diperbarui.");
+    } catch (error) {
+      setMessageTone("error");
+      setMessage(error instanceof Error ? error.message : "Gagal memperbarui detail akun.");
+    } finally {
+      setIsProfileSaving(false);
+    }
   }
 
-  function saveSecurity() {
+  async function saveSecurity() {
     if (!currentPassword.trim() || !newPassword.trim() || !confirmPassword.trim()) {
       setMessageTone("error");
       setMessage("Lengkapi semua kolom kata sandi.");
@@ -133,14 +217,42 @@ function AdminProfilContent() {
       setMessage("Konfirmasi kata sandi tidak cocok.");
       return;
     }
-    setMessageTone("success");
-    setMessage("Perubahan keamanan berhasil disimpan.");
+
+    setIsPasswordSaving(true);
+    try {
+      const response = await fetch("/api/admin/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          currentPassword,
+          newPassword,
+          confirmPassword
+        })
+      });
+      const data = (await response.json()) as { message?: string };
+
+      if (!response.ok) {
+        throw new Error(data.message || "Gagal memperbarui kata sandi.");
+      }
+
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setMessageTone("success");
+      setMessage(data.message || "Perubahan keamanan berhasil disimpan.");
+    } catch (error) {
+      setMessageTone("error");
+      setMessage(error instanceof Error ? error.message : "Gagal memperbarui kata sandi.");
+    } finally {
+      setIsPasswordSaving(false);
+    }
   }
 
   function changeLanguage() {
     const next =
       language === "Bahasa Indonesia (Default)" ? "English (Default)" : "Bahasa Indonesia (Default)";
     setLanguage(next);
+    window.localStorage.setItem("shipin_admin_language", next);
     setMessageTone("info");
     setMessage(`Bahasa diubah ke ${next}.`);
   }
@@ -176,26 +288,22 @@ function AdminProfilContent() {
           <div className="space-y-4">
             <article className="rounded-[30px] border border-[#e5ebe5] bg-white px-6 py-6 shadow-[0_8px_30px_rgba(25,45,33,0.05)] md:px-7">
               <div className="flex items-center gap-4">
-                <div className="relative h-[95px] w-[95px] rounded-[28px] border-[3px] border-[#79de8c] bg-[#f6fbf5]">
-                  <div className="flex h-full w-full items-center justify-center rounded-[24px] bg-white">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#1b7f4c] text-white ring-2 ring-[#d5e8d8]">
-                      <UserIcon className="h-[18px] w-[18px]" />
+                <div className="relative h-[95px] w-[95px] overflow-hidden rounded-[28px] border-[3px] border-[#79de8c] bg-[#f6fbf5]">
+                  {profile?.fullName ? (
+                    <img
+                      src={`https://ui-avatars.com/api/?name=${encodeURIComponent(profile.fullName)}&background=16a34a&color=fff&size=128&bold=true`}
+                      alt={`Avatar ${profile.fullName}`}
+                      className="h-full w-full rounded-[24px] object-cover"
+                      width={95}
+                      height={95}
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center rounded-[24px] bg-white">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#1b7f4c] text-white ring-2 ring-[#d5e8d8]">
+                        <UserIcon className="h-[18px] w-[18px]" />
+                      </div>
                     </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMessageTone("info");
-                      setMessage("Fitur ubah foto profil akan diaktifkan pada integrasi media.");
-                    }}
-                    className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-[#1f8f55] text-white shadow-sm"
-                    aria-label="Edit foto profil"
-                  >
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
-                      <path d="M12 20h9" />
-                      <path d="m16.5 3.5 4 4L7 21H3v-4L16.5 3.5Z" />
-                    </svg>
-                  </button>
+                  )}
                 </div>
                 <div>
                   <h2 className="text-[23px] font-extrabold text-[#153528] md:text-[26px]">Detail Akun</h2>
@@ -215,7 +323,7 @@ function AdminProfilContent() {
                 <div>
                   <RowLabel>Username</RowLabel>
                   <div className="h-12 rounded-xl bg-[#f2f5ef] px-4 text-[15px] leading-[48px] text-[#9ca8a1]">
-                    adminship1
+                    {profile?.username || "adminship1"}
                   </div>
                   <p className="mt-1 text-[11px] text-[#98a29d]">Username tidak dapat diubah.</p>
                 </div>
@@ -232,9 +340,10 @@ function AdminProfilContent() {
                   <button
                     type="button"
                     onClick={updateEmail}
+                    disabled={isProfileSaving}
                     className="h-12 rounded-full bg-[#84e88c] px-7 text-[15px] font-semibold text-[#1a5a35]"
                   >
-                    Update
+                    {isProfileSaving ? "Menyimpan..." : "Update"}
                   </button>
                 </div>
               </div>
@@ -302,6 +411,7 @@ function AdminProfilContent() {
             <button
               type="button"
               onClick={saveSecurity}
+              disabled={isPasswordSaving}
               className="mt-6 flex h-14 w-full items-center justify-center gap-2 rounded-full bg-[#1a7332] text-[16px] font-semibold text-white"
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
@@ -309,7 +419,7 @@ function AdminProfilContent() {
                 <path d="M17 21v-8H7v8" />
                 <path d="M7 3v5h8" />
               </svg>
-              Simpan Perubahan
+              {isPasswordSaving ? "Menyimpan..." : "Simpan Perubahan"}
             </button>
             <button
               type="button"

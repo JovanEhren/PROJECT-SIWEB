@@ -28,6 +28,8 @@ import {
   getCheckpointOrder
 } from "@/lib/utils/checkpoint-shared";
 import { TRACKING_REFRESH_INTERVAL_MS } from "@/lib/tracking-config";
+import { PublicFooter } from "@/components/public/footer";
+import { PublicToast } from "@/components/ui/public-toast";
 
 const TrackingMap = dynamic(
   () => import("@/components/public/tracking-map").then((mod) => mod.TrackingMap),
@@ -77,6 +79,13 @@ function normalizeResiInput(value: string) {
   return value.toUpperCase().replace(/[^A-Z0-9-]/g, "").trim();
 }
 
+function validateResiInput(value: string) {
+  const normalized = normalizeResiInput(value);
+  if (!normalized) return "Nomor resi tidak boleh kosong";
+  if (!/^SPG-[A-Z0-9]{3,}-ID$/.test(normalized)) return "Format nomor resi tidak valid";
+  return "";
+}
+
 function parseOriginDestination(shipment: ShipmentRecord) {
   const [originRaw, destinationRaw] = shipment.destination.split("|");
   return {
@@ -103,27 +112,35 @@ export function LacakPaketPage() {
   const [isNotFound, setIsNotFound] = useState(false);
   const [rows, setRows] = useState<ShipmentRecord[]>([]);
   const [checkpoints, setCheckpoints] = useState<CheckpointRecord[]>([]);
+  const [fieldError, setFieldError] = useState("");
+  const [toastMessage, setToastMessage] = useState("");
 
   async function loadTracking(resi: string) {
-    const data = await fetchTrackingByResi(resi);
-    if (!data.shipment) {
-      setRows([]);
-      setActiveResi("");
-      setIsNotFound(true);
-      setCheckpoints([]);
-      return;
-    }
+    try {
+      const data = await fetchTrackingByResi(resi);
+      if (!data.shipment) {
+        setRows([]);
+        setActiveResi("");
+        setIsNotFound(true);
+        setFieldError("Nomor resi tidak ditemukan");
+        setCheckpoints([]);
+        return;
+      }
 
-    setRows([data.shipment]);
-    setActiveResi(data.shipment.id);
-    setResiInput(data.shipment.id);
-    setIsNotFound(false);
-    setCheckpoints(
-      (data.checkpoints || []).map((checkpoint) => ({
-        ...checkpoint,
-        waktu: new Date(checkpoint.waktu)
-      }))
-    );
+      setRows([data.shipment]);
+      setActiveResi(data.shipment.id);
+      setResiInput(data.shipment.id);
+      setFieldError("");
+      setIsNotFound(false);
+      setCheckpoints(
+        (data.checkpoints || []).map((checkpoint) => ({
+          ...checkpoint,
+          waktu: new Date(checkpoint.waktu)
+        }))
+      );
+    } catch {
+      setToastMessage("Gagal mengambil data, silakan coba lagi");
+    }
   }
 
   useEffect(() => {
@@ -152,6 +169,7 @@ export function LacakPaketPage() {
           setActiveResi("");
           setResiInput(resiFromQuery);
           setIsNotFound(true);
+          setFieldError("Nomor resi tidak ditemukan");
           setCheckpoints([]);
           return;
         }
@@ -160,6 +178,7 @@ export function LacakPaketPage() {
         setActiveResi(data.shipment.id);
         setResiInput(data.shipment.id);
         setIsNotFound(false);
+        setFieldError("");
         setCheckpoints(
           (data.checkpoints || []).map((checkpoint) => ({
             ...checkpoint,
@@ -168,12 +187,12 @@ export function LacakPaketPage() {
         );
       } catch {
         if (active) {
-          setIsNotFound(true);
+          setToastMessage("Gagal mengambil data, silakan coba lagi");
         }
       }
     }
 
-    hydrate().catch(() => setIsNotFound(true));
+    hydrate().catch(() => setToastMessage("Gagal mengambil data, silakan coba lagi"));
 
     return () => {
       active = false;
@@ -276,7 +295,16 @@ export function LacakPaketPage() {
 
   async function handleSearch() {
     const normalized = normalizeResiInput(resiInput);
-    if (!normalized) return;
+    const validationMessage = validateResiInput(resiInput);
+
+    if (validationMessage) {
+      setFieldError(validationMessage);
+      setIsNotFound(false);
+      return;
+    }
+
+    setFieldError("");
+    setToastMessage("");
     await runProgressCheck().catch(() => null);
     await loadTracking(normalized);
   }
@@ -300,7 +328,13 @@ export function LacakPaketPage() {
           <div className="mt-5 flex flex-col gap-2 rounded-[18px] border border-[#e3e8e2] bg-white p-3 sm:flex-row sm:items-center">
             <input
               value={resiInput}
-              onChange={(event) => setResiInput(event.target.value)}
+              onChange={(event) => {
+                setResiInput(event.target.value);
+                if (fieldError) {
+                  setFieldError(validateResiInput(event.target.value));
+                }
+              }}
+              onBlur={(event) => setFieldError(validateResiInput(event.target.value))}
               onKeyDown={(event) => {
                 if (event.key === "Enter") {
                   handleSearch();
@@ -318,6 +352,8 @@ export function LacakPaketPage() {
               Cari Resi
             </button>
           </div>
+
+          {fieldError ? <p className="mt-2 text-[13px] font-medium text-[#b42318]">{fieldError}</p> : null}
 
           {isNotFound ? (
             <div className="mt-4 rounded-[16px] border border-[#f0d6d6] bg-[#fff4f4] px-4 py-3 text-[13px] font-semibold text-[#bf3b3b]">
@@ -492,50 +528,8 @@ export function LacakPaketPage() {
         </div>
       </section>
 
-      <footer id="kontak" className="mt-8 bg-white/85">
-        <div className="shell py-12">
-          <div className="grid gap-10 border-b border-[#e8ebe4] pb-10 md:grid-cols-2 lg:grid-cols-[1.4fr_0.7fr_0.7fr]">
-            <div>
-              <p className="text-[18px] font-extrabold tracking-[-0.03em] text-shipin-deep">SHIPIN GO</p>
-              <p className="mt-5 max-w-[360px] text-[15px] leading-8 text-shipin-text">
-                Solusi logistik terdepan di Indonesia. Menghubungkan orang dan bisnis
-                melalui sistem pengiriman yang cerdas dan efisien.
-              </p>
-            </div>
-            <div>
-              <p className="text-[15px] font-bold text-shipin-ink">Perusahaan</p>
-              <ul className="mt-5 space-y-4 text-[15px] text-shipin-text">
-                <li>Tentang Kami</li>
-                <li>Karir</li>
-                <li>Kontak</li>
-              </ul>
-            </div>
-            <div>
-              <p className="text-[15px] font-bold text-shipin-ink">Dukungan</p>
-              <ul className="mt-5 space-y-4 text-[15px] text-shipin-text">
-                <li>Pusat Bantuan</li>
-                <li>Syarat &amp; Ketentuan</li>
-                <li>Kebijakan Privasi</li>
-              </ul>
-            </div>
-          </div>
-          <div className="flex flex-col gap-4 pt-7 text-[14px] text-shipin-text sm:flex-row sm:items-center sm:justify-between">
-            <p>(c) 2024 SHIPIN GO. Hak Cipta Dilindungi.</p>
-            <div className="flex gap-6">
-              <a href="https://www.instagram.com/" target="_blank" rel="noreferrer" className="hover:text-shipin-deep">
-                Instagram
-              </a>
-              <a href="https://www.linkedin.com/" target="_blank" rel="noreferrer" className="hover:text-shipin-deep">
-                LinkedIn
-              </a>
-              <a href="https://x.com/" target="_blank" rel="noreferrer" className="hover:text-shipin-deep">
-                Twitter
-              </a>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <PublicFooter />
+      {toastMessage ? <PublicToast message={toastMessage} /> : null}
     </main>
   );
 }
-

@@ -1,7 +1,13 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 
 import { LacakPaketPage } from "@/components/public/lacak-paket-page";
 import { PublicNavbar } from "@/components/public/navbar";
+
+export const metadata: Metadata = {
+  title: "Lacak Paket | SHIPIN GO",
+  description: "Lacak status pengiriman paket SHIPIN GO secara real-time."
+};
 
 function LoadingFallback() {
   return (

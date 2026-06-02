@@ -27,6 +27,31 @@ const serviceOptions = [
 
 const DRAFT_STORAGE_KEY = "shipin_admin_kirim_paket_draft";
 
+type ShipmentFieldErrorKey =
+  | "senderName"
+  | "senderPhone"
+  | "senderAddressDetail"
+  | "receiverName"
+  | "receiverPhone"
+  | "receiverAddressDetail"
+  | "itemName"
+  | "itemCategory"
+  | "vehicleId"
+  | "weightKg"
+  | "dimP"
+  | "dimL"
+  | "dimT";
+
+function isValidPhoneNumber(value: string) {
+  const normalized = value.replace(/[\s()-]/g, "");
+  return /^(\+62|62|0)\d{8,13}$/.test(normalized);
+}
+
+function isNumericField(value: string) {
+  if (!value.trim()) return false;
+  return Number.isFinite(Number(value));
+}
+
 function LoadingFallback() {
   return (
     <main className="min-h-screen bg-[#eef2ee] px-4 py-6 sm:px-6 lg:px-8">
@@ -60,7 +85,8 @@ function AdminKirimPaketContent() {
   const [dimP, setDimP] = useState("");
   const [dimL, setDimL] = useState("");
   const [dimT, setDimT] = useState("");
-  const [packageType, setPackageType] = useState("");
+  const [itemName, setItemName] = useState("");
+  const [itemCategory, setItemCategory] = useState("");
   const [itemNote, setItemNote] = useState("");
   const [deliveryType, setDeliveryType] = useState<"BIASA" | "CEPAT" | "VVIP">("BIASA");
   const [vehicleId, setVehicleId] = useState("");
@@ -70,6 +96,7 @@ function AdminKirimPaketContent() {
   const [noticeTone, setNoticeTone] = useState<"error" | "success">("error");
   const [senderError, setSenderError] = useState("");
   const [receiverError, setReceiverError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<ShipmentFieldErrorKey, string>>>({});
   const [draftInfo, setDraftInfo] = useState("");
   const [guideInfo, setGuideInfo] = useState("");
   const [isPaymentSuccessOpen, setIsPaymentSuccessOpen] = useState(false);
@@ -135,6 +162,80 @@ function AdminKirimPaketContent() {
   const receiverCityNode = receiverCities.find((item) => item.city === receiverCity) || receiverCities[0];
   const receiverDistricts = receiverCityNode?.districts || [];
 
+  function setFieldError(key: ShipmentFieldErrorKey, value: string) {
+    setFieldErrors((current) => ({
+      ...current,
+      [key]: value
+    }));
+  }
+
+  function validateField(key: ShipmentFieldErrorKey) {
+    switch (key) {
+      case "senderName":
+        return senderName.trim() ? "" : "Field ini wajib diisi";
+      case "senderPhone":
+        if (!senderPhone.trim()) return "Field ini wajib diisi";
+        return isValidPhoneNumber(senderPhone) ? "" : "Format nomor telepon tidak valid";
+      case "senderAddressDetail":
+        return senderAddressDetail.trim() ? "" : "Field ini wajib diisi";
+      case "receiverName":
+        return receiverName.trim() ? "" : "Field ini wajib diisi";
+      case "receiverPhone":
+        if (!receiverPhone.trim()) return "Field ini wajib diisi";
+        return isValidPhoneNumber(receiverPhone) ? "" : "Format nomor telepon tidak valid";
+      case "receiverAddressDetail":
+        return receiverAddressDetail.trim() ? "" : "Field ini wajib diisi";
+      case "itemName":
+        return itemName.trim() ? "" : "Field ini wajib diisi";
+      case "itemCategory":
+        return itemCategory.trim() ? "" : "Field ini wajib diisi";
+      case "vehicleId":
+        return vehicleId ? "" : "Field ini wajib diisi";
+      case "weightKg":
+        if (!weightKg.trim()) return "Field ini wajib diisi";
+        return isNumericField(weightKg) ? "" : "Harus berupa angka";
+      case "dimP":
+        if (!dimP.trim()) return "Field ini wajib diisi";
+        return isNumericField(dimP) ? "" : "Harus berupa angka";
+      case "dimL":
+        if (!dimL.trim()) return "Field ini wajib diisi";
+        return isNumericField(dimL) ? "" : "Harus berupa angka";
+      case "dimT":
+        if (!dimT.trim()) return "Field ini wajib diisi";
+        return isNumericField(dimT) ? "" : "Harus berupa angka";
+      default:
+        return "";
+    }
+  }
+
+  function validateBeforeSubmit() {
+    const keys: ShipmentFieldErrorKey[] = [
+      "senderName",
+      "senderPhone",
+      "senderAddressDetail",
+      "receiverName",
+      "receiverPhone",
+      "receiverAddressDetail",
+      "itemName",
+      "itemCategory",
+      "vehicleId",
+      "weightKg",
+      "dimP",
+      "dimL",
+      "dimT"
+    ];
+
+    const nextErrors: Partial<Record<ShipmentFieldErrorKey, string>> = {};
+    keys.forEach((key) => {
+      const message = validateField(key);
+      if (message) {
+        nextErrors[key] = message;
+      }
+    });
+    setFieldErrors(nextErrors);
+    return keys.every((key) => !nextErrors[key]);
+  }
+
   function resetForm() {
     setSenderName("");
     setSenderPhone("");
@@ -156,13 +257,15 @@ function AdminKirimPaketContent() {
     setDimP("");
     setDimL("");
     setDimT("");
-    setPackageType("");
+    setItemName("");
+    setItemCategory("");
     setItemNote("");
     setDeliveryType("BIASA");
     setVehicleId(vehicles[0]?.id ? String(vehicles[0].id) : "");
     setSelectedService("reguler");
     setSenderError("");
     setReceiverError("");
+    setFieldErrors({});
     setDraftInfo("");
     setGuideInfo("");
   }
@@ -195,7 +298,8 @@ function AdminKirimPaketContent() {
       dimP,
       dimL,
       dimT,
-      packageType,
+      itemName,
+      itemCategory,
       itemNote,
       deliveryType,
       vehicleId,
@@ -204,6 +308,10 @@ function AdminKirimPaketContent() {
     window.localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draftPayload));
     setDraftInfo("Draft pengiriman berhasil disimpan.");
   }
+
+  useEffect(() => {
+    document.title = "Kirim Paket | SHIPIN GO Admin";
+  }, []);
 
   useEffect(() => {
     fetchVehiclesFromDatabase()
@@ -267,7 +375,8 @@ function AdminKirimPaketContent() {
       setDimP(draft.dimP || "");
       setDimL(draft.dimL || "");
       setDimT(draft.dimT || "");
-      setPackageType(draft.packageType || "");
+      setItemName(draft.itemName || "");
+      setItemCategory(draft.itemCategory || "");
       setItemNote(draft.itemNote || "");
       setDeliveryType(draft.deliveryType === "VVIP" || draft.deliveryType === "CEPAT" ? draft.deliveryType : "BIASA");
       setVehicleId(draft.vehicleId || "");
@@ -283,17 +392,18 @@ function AdminKirimPaketContent() {
   }
 
   async function handleCreateShipment() {
+    const isValid = validateBeforeSubmit();
     const senderMissing = !senderName.trim() || !senderAddressDetail.trim() || !senderSubdistrict.trim();
     const receiverMissing =
       !receiverName.trim() || !receiverAddressDetail.trim() || !receiverSubdistrict.trim();
-    const cargoMissing = !packageType.trim() || !vehicleId;
+    const cargoMissing = !itemName.trim() || !itemCategory.trim() || !vehicleId;
 
     setSenderError(senderMissing ? "Nama dan alamat pengirim wajib diisi." : "");
     setReceiverError(receiverMissing ? "Nama dan alamat penerima wajib diisi." : "");
 
-    if (senderMissing || receiverMissing || cargoMissing) {
+    if (!isValid || senderMissing || receiverMissing || cargoMissing) {
       setNoticeTone("error");
-      setNotice("Lengkapi data wajib: pengirim, penerima, jenis barang, dan kendaraan.");
+      setNotice("Format data tidak valid. Periksa kembali field yang bertanda merah.");
       return;
     }
 
@@ -322,6 +432,8 @@ function AdminKirimPaketContent() {
         destinationProvince: receiverProvince,
         originCity: senderCity,
         destinationCity: receiverCity,
+        originPostalCode: senderPostalCode,
+        destinationPostalCode: receiverPostalCode,
         lengthCm,
         widthCm,
         heightCm,
@@ -329,7 +441,8 @@ function AdminKirimPaketContent() {
         receiverPhone,
         weightKg: weight,
         service,
-        packageType,
+        itemName,
+        itemCategory,
         itemNote,
         deliveryType,
         vehicleId: Number(vehicleId),
@@ -348,7 +461,7 @@ function AdminKirimPaketContent() {
       setIsPaymentSuccessOpen(true);
     } catch (error) {
       setNoticeTone("error");
-      setNotice(error instanceof Error ? error.message : "Data gagal disimpan ke database.");
+      setNotice(error instanceof Error ? error.message : "Gagal menyimpan data, coba lagi");
     } finally {
       setIsSubmitting(false);
     }
@@ -389,16 +502,24 @@ function AdminKirimPaketContent() {
                     onChange={(event) => {
                       setSenderName(event.target.value);
                       if (senderError) setSenderError("");
+                      if (fieldErrors.senderName) setFieldError("senderName", "");
                     }}
+                    onBlur={() => setFieldError("senderName", validateField("senderName"))}
                   />
+                  {fieldErrors.senderName ? <p className="text-[12px] text-[#c62828]">{fieldErrors.senderName}</p> : null}
                 </Field>
                 <Field label="Nomor Telepon">
                   <input
                     className={inputClass}
                     placeholder="0812xxxx"
                     value={senderPhone}
-                    onChange={(event) => setSenderPhone(event.target.value)}
+                    onChange={(event) => {
+                      setSenderPhone(event.target.value);
+                      if (fieldErrors.senderPhone) setFieldError("senderPhone", "");
+                    }}
+                    onBlur={() => setFieldError("senderPhone", validateField("senderPhone"))}
                   />
+                  {fieldErrors.senderPhone ? <p className="text-[12px] text-[#c62828]">{fieldErrors.senderPhone}</p> : null}
                 </Field>
               </div>
               <div className="grid gap-2.5 sm:grid-cols-2">
@@ -476,8 +597,11 @@ function AdminKirimPaketContent() {
                   onChange={(event) => {
                     setSenderAddressDetail(event.target.value);
                     if (senderError) setSenderError("");
+                    if (fieldErrors.senderAddressDetail) setFieldError("senderAddressDetail", "");
                   }}
+                  onBlur={() => setFieldError("senderAddressDetail", validateField("senderAddressDetail"))}
                 />
+                {fieldErrors.senderAddressDetail ? <p className="text-[12px] text-[#c62828]">{fieldErrors.senderAddressDetail}</p> : null}
               </Field>
               {senderError ? <p className="mt-2 text-[12px] font-semibold text-[#c62828]">{senderError}</p> : null}
             </BlockCard>
@@ -495,16 +619,24 @@ function AdminKirimPaketContent() {
                     onChange={(event) => {
                       setReceiverName(event.target.value);
                       if (receiverError) setReceiverError("");
+                      if (fieldErrors.receiverName) setFieldError("receiverName", "");
                     }}
+                    onBlur={() => setFieldError("receiverName", validateField("receiverName"))}
                   />
+                  {fieldErrors.receiverName ? <p className="text-[12px] text-[#c62828]">{fieldErrors.receiverName}</p> : null}
                 </Field>
                 <Field label="Nomor Telepon">
                   <input
                     className={inputClass}
                     placeholder="0857xxxx"
                     value={receiverPhone}
-                    onChange={(event) => setReceiverPhone(event.target.value)}
+                    onChange={(event) => {
+                      setReceiverPhone(event.target.value);
+                      if (fieldErrors.receiverPhone) setFieldError("receiverPhone", "");
+                    }}
+                    onBlur={() => setFieldError("receiverPhone", validateField("receiverPhone"))}
                   />
+                  {fieldErrors.receiverPhone ? <p className="text-[12px] text-[#c62828]">{fieldErrors.receiverPhone}</p> : null}
                 </Field>
               </div>
               <div className="grid gap-2.5 sm:grid-cols-2">
@@ -582,22 +714,54 @@ function AdminKirimPaketContent() {
                   onChange={(event) => {
                     setReceiverAddressDetail(event.target.value);
                     if (receiverError) setReceiverError("");
+                    if (fieldErrors.receiverAddressDetail) setFieldError("receiverAddressDetail", "");
                   }}
+                  onBlur={() => setFieldError("receiverAddressDetail", validateField("receiverAddressDetail"))}
                 />
+                {fieldErrors.receiverAddressDetail ? <p className="text-[12px] text-[#c62828]">{fieldErrors.receiverAddressDetail}</p> : null}
               </Field>
               {receiverError ? <p className="mt-2 text-[12px] font-semibold text-[#c62828]">{receiverError}</p> : null}
             </BlockCard>
 
             <BlockCard number={3} title="Detail Paket">
               <div className="mb-4 grid gap-2.5 sm:grid-cols-2">
-                <Field label="Jenis Barang">
+                <Field label="Nama Barang">
                   <input
                     className={inputClass}
-                    placeholder="Contoh: Dokumen, Elektronik, Sparepart"
-                    value={packageType}
-                    onChange={(event) => setPackageType(event.target.value)}
+                    placeholder="Contoh: Laptop ASUS Vivobook"
+                    value={itemName}
+                    onChange={(event) => {
+                      setItemName(event.target.value);
+                      if (fieldErrors.itemName) setFieldError("itemName", "");
+                    }}
+                    onBlur={() => setFieldError("itemName", validateField("itemName"))}
                   />
+                  {fieldErrors.itemName ? <p className="text-[12px] text-[#c62828]">{fieldErrors.itemName}</p> : null}
                 </Field>
+                <Field label="Jenis Barang">
+                  <select
+                    className={inputClass}
+                    value={itemCategory}
+                    onChange={(event) => {
+                      setItemCategory(event.target.value);
+                      if (fieldErrors.itemCategory) setFieldError("itemCategory", "");
+                    }}
+                    onBlur={() => setFieldError("itemCategory", validateField("itemCategory"))}
+                  >
+                    <option value="">Pilih jenis barang</option>
+                    <option value="Elektronik">Elektronik</option>
+                    <option value="Pakaian">Pakaian</option>
+                    <option value="Makanan">Makanan</option>
+                    <option value="Dokumen">Dokumen</option>
+                    <option value="Kosmetik">Kosmetik</option>
+                    <option value="Aksesoris">Aksesoris</option>
+                    <option value="Sparepart">Sparepart</option>
+                    <option value="Lainnya">Lainnya</option>
+                  </select>
+                  {fieldErrors.itemCategory ? <p className="text-[12px] text-[#c62828]">{fieldErrors.itemCategory}</p> : null}
+                </Field>
+              </div>
+              <div className="mb-4 grid gap-2.5 sm:grid-cols-2">
                 <Field label="Jenis Pengiriman">
                   <select
                     className={inputClass}
@@ -613,13 +777,15 @@ function AdminKirimPaketContent() {
                     <option value="VVIP">Vvip</option>
                   </select>
                 </Field>
-              </div>
-              <div className="mb-4 grid gap-2.5 sm:grid-cols-2">
                 <Field label="Kendaraan">
                   <select
                     className={inputClass}
                     value={vehicleId}
-                    onChange={(event) => setVehicleId(event.target.value)}
+                    onChange={(event) => {
+                      setVehicleId(event.target.value);
+                      if (fieldErrors.vehicleId) setFieldError("vehicleId", "");
+                    }}
+                    onBlur={() => setFieldError("vehicleId", validateField("vehicleId"))}
                   >
                     <option value="">Pilih kendaraan</option>
                     {vehicles.map((vehicle) => (
@@ -628,7 +794,10 @@ function AdminKirimPaketContent() {
                       </option>
                     ))}
                   </select>
+                  {fieldErrors.vehicleId ? <p className="text-[12px] text-[#c62828]">{fieldErrors.vehicleId}</p> : null}
                 </Field>
+              </div>
+              <div className="mb-4 grid gap-2.5 sm:grid-cols-2">
                 <Field label="Deskripsi / Catatan Barang">
                   <input
                     className={inputClass}
@@ -637,26 +806,44 @@ function AdminKirimPaketContent() {
                     onChange={(event) => setItemNote(event.target.value)}
                   />
                 </Field>
-              </div>
-              <div className="mb-4 grid gap-2.5 sm:grid-cols-[1fr_2fr]">
                 <Field label="Berat (Kg)">
                   <div className="relative">
                     <input
+                      type="number"
+                      min="0.1"
+                      step="0.1"
                       className={`${inputClass} pr-8`}
                       value={weightKg}
-                      onChange={(event) => setWeightKg(event.target.value)}
+                      onChange={(event) => {
+                        setWeightKg(event.target.value);
+                        if (fieldErrors.weightKg) setFieldError("weightKg", "");
+                      }}
+                      onBlur={() => setFieldError("weightKg", validateField("weightKg"))}
                     />
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-semibold text-[#8e9690]">kg</span>
                   </div>
+                  {fieldErrors.weightKg ? <p className="text-[12px] text-[#c62828]">{fieldErrors.weightKg}</p> : null}
                 </Field>
-
-                <Field label="Dimensi (PxLxT cm)">
+              </div>
+              <div className="mb-4 grid gap-2.5 sm:grid-cols-2">
+                <Field label="Dimensi Paket (cm)">
                   <div className="grid grid-cols-3 gap-2">
-                    <input className={inputClass} placeholder="P" value={dimP} onChange={(event) => setDimP(event.target.value)} />
-                    <input className={inputClass} placeholder="L" value={dimL} onChange={(event) => setDimL(event.target.value)} />
-                    <input className={inputClass} placeholder="T" value={dimT} onChange={(event) => setDimT(event.target.value)} />
+                    <input type="number" min="0" className={inputClass} placeholder="Panjang" value={dimP} onChange={(event) => { setDimP(event.target.value); if (fieldErrors.dimP) setFieldError("dimP", ""); }} onBlur={() => setFieldError("dimP", validateField("dimP"))} />
+                    <input type="number" min="0" className={inputClass} placeholder="Lebar" value={dimL} onChange={(event) => { setDimL(event.target.value); if (fieldErrors.dimL) setFieldError("dimL", ""); }} onBlur={() => setFieldError("dimL", validateField("dimL"))} />
+                    <input type="number" min="0" className={inputClass} placeholder="Tinggi" value={dimT} onChange={(event) => { setDimT(event.target.value); if (fieldErrors.dimT) setFieldError("dimT", ""); }} onBlur={() => setFieldError("dimT", validateField("dimT"))} />
                   </div>
+                  {fieldErrors.dimP || fieldErrors.dimL || fieldErrors.dimT ? (
+                    <p className="text-[12px] text-[#c62828]">
+                      {fieldErrors.dimP || fieldErrors.dimL || fieldErrors.dimT}
+                    </p>
+                  ) : null}
                 </Field>
+                <div className="rounded-[18px] border border-[#dce4da] bg-[#f6faf5] px-4 py-3 text-[12px] text-[#5d6a61]">
+                  <p className="font-bold text-[#2c372f]">Ringkasan Barang</p>
+                  <p className="mt-1">Nama: {itemName.trim() || "-"}</p>
+                  <p>Jenis: {itemCategory.trim() || "-"}</p>
+                  <p>Dimensi: {dimP || "0"} x {dimL || "0"} x {dimT || "0"} cm</p>
+                </div>
               </div>
 
               <p className="mb-2 text-[12px] font-bold text-[#303a33]">Pilih Jenis Layanan</p>

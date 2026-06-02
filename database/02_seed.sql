@@ -1,20 +1,22 @@
-INSERT INTO shipin_users (id, full_name, email, phone, role, password_hash)
+INSERT INTO shipin_users (id, full_name, email, username, phone, role, account_status, password_hash)
 VALUES
-  ('11111111-1111-1111-1111-111111111111', 'Admin Shipin', 'admin@shipingo.id', '0215007447', 'ADMIN', 'hashed_admin_123'),
-  ('22222222-2222-2222-2222-222222222221', 'Budi Santoso', 'budi.santoso@mail.id', '081200000001', 'CUSTOMER', 'hashed_customer_budi'),
-  ('22222222-2222-2222-2222-222222222222', 'Siti Aminah', 'siti.aminah@mail.id', '081300000001', 'CUSTOMER', 'hashed_customer_siti'),
-  ('22222222-2222-2222-2222-222222222223', 'Rina Kartika', 'rina.kartika@mail.id', '081300000002', 'CUSTOMER', 'hashed_customer_rina'),
-  ('22222222-2222-2222-2222-222222222224', 'Dimas Prakoso', 'dimas.prakoso@mail.id', '081300000003', 'CUSTOMER', 'hashed_customer_dimas'),
-  ('22222222-2222-2222-2222-222222222225', 'Laras Wulandari', 'laras.wulandari@mail.id', '081300000004', 'CUSTOMER', 'hashed_customer_laras'),
-  ('22222222-2222-2222-2222-222222222226', 'Maya Putri', 'maya.putri@mail.id', '081300000005', 'CUSTOMER', 'hashed_customer_maya'),
-  ('33333333-3333-3333-3333-333333333331', 'Andi Kurir', 'andi.kurir@shipingo.id', '081211112222', 'COURIER', 'hashed_courier_andi'),
-  ('33333333-3333-3333-3333-333333333332', 'Fajar Kurir', 'fajar.kurir@shipingo.id', '081211112223', 'COURIER', 'hashed_courier_fajar'),
-  ('33333333-3333-3333-3333-333333333333', 'Nadia Kurir', 'nadia.kurir@shipingo.id', '081211112224', 'COURIER', 'hashed_courier_nadia')
+  ('11111111-1111-1111-1111-111111111111', 'Admin Shipin', 'admin@shipingo.id', 'adminship1', '0215007447', 'ADMIN', 'AKTIF', '$2b$10$fmOwzlcpl5ZnRLCgRycDtO7A9J/7uhJbkOTLJ3O74gAzUORGHYZYe'),
+  ('22222222-2222-2222-2222-222222222221', 'Budi Santoso', 'budi.santoso@mail.id', NULL, '081200000001', 'CUSTOMER', 'AKTIF', 'hashed_customer_budi'),
+  ('22222222-2222-2222-2222-222222222222', 'Siti Aminah', 'siti.aminah@mail.id', NULL, '081300000001', 'CUSTOMER', 'AKTIF', 'hashed_customer_siti'),
+  ('22222222-2222-2222-2222-222222222223', 'Rina Kartika', 'rina.kartika@mail.id', NULL, '081300000002', 'CUSTOMER', 'AKTIF', 'hashed_customer_rina'),
+  ('22222222-2222-2222-2222-222222222224', 'Dimas Prakoso', 'dimas.prakoso@mail.id', NULL, '081300000003', 'CUSTOMER', 'AKTIF', 'hashed_customer_dimas'),
+  ('22222222-2222-2222-2222-222222222225', 'Laras Wulandari', 'laras.wulandari@mail.id', NULL, '081300000004', 'CUSTOMER', 'AKTIF', 'hashed_customer_laras'),
+  ('22222222-2222-2222-2222-222222222226', 'Maya Putri', 'maya.putri@mail.id', NULL, '081300000005', 'CUSTOMER', 'AKTIF', 'hashed_customer_maya'),
+  ('33333333-3333-3333-3333-333333333331', 'Andi Kurir', 'andi.kurir@shipingo.id', NULL, '081211112222', 'COURIER', 'AKTIF', 'hashed_courier_andi'),
+  ('33333333-3333-3333-3333-333333333332', 'Fajar Kurir', 'fajar.kurir@shipingo.id', NULL, '081211112223', 'COURIER', 'AKTIF', 'hashed_courier_fajar'),
+  ('33333333-3333-3333-3333-333333333333', 'Nadia Kurir', 'nadia.kurir@shipingo.id', NULL, '081211112224', 'COURIER', 'AKTIF', 'hashed_courier_nadia')
 ON CONFLICT (id) DO UPDATE SET
   full_name = EXCLUDED.full_name,
   email = EXCLUDED.email,
+  username = EXCLUDED.username,
   phone = EXCLUDED.phone,
   role = EXCLUDED.role,
+  account_status = EXCLUDED.account_status,
   password_hash = EXCLUDED.password_hash;
 
 INSERT INTO shipin_addresses (id, user_id, label, city, province, postal_code, detail_address, is_primary)

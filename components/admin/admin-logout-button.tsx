@@ -2,14 +2,14 @@
 
 import { useRouter } from "next/navigation";
 
-import { ADMIN_SESSION_COOKIE } from "@/lib/auth";
-
 export function AdminLogoutButton() {
   const router = useRouter();
 
-  function handleLogout() {
-    document.cookie = `${ADMIN_SESSION_COOKIE}=; path=/; max-age=0; SameSite=Lax`;
-    router.push("/");
+  async function handleLogout() {
+    await fetch("/api/admin/session", {
+      method: "DELETE"
+    }).catch(() => null);
+    router.push("/admin/login");
     router.refresh();
   }
 

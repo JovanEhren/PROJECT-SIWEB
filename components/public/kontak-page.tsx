@@ -10,6 +10,8 @@ import {
   MapPinIcon,
   PhoneIcon
 } from "@/components/icons";
+import { PublicFooter } from "@/components/public/footer";
+import { PublicToast } from "@/components/ui/public-toast";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { OFFICE_PARTNERS } from "@/lib/shipping-pricing";
 
@@ -46,8 +48,67 @@ const contactCards = [
   }
 ];
 
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export function KontakPage() {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [subject, setSubject] = useState("Pengiriman Domestik");
+  const [message, setMessage] = useState("");
   const [isSent, setIsSent] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [toastMessage, setToastMessage] = useState("");
+
+  function validateName(value: string) {
+    if (!value.trim()) return "Nama tidak boleh kosong";
+    return "";
+  }
+
+  function validateEmail(value: string) {
+    const normalized = value.trim();
+    if (!normalized) return "Email tidak boleh kosong";
+    if (!EMAIL_PATTERN.test(normalized)) return "Format email tidak valid";
+    return "";
+  }
+
+  function validateMessage(value: string) {
+    if (!value.trim()) return "Pesan tidak boleh kosong";
+    return "";
+  }
+
+  function setFieldError(key: string, value: string) {
+    setFieldErrors((current) => ({
+      ...current,
+      [key]: value
+    }));
+  }
+
+  function handleSubmit() {
+    const nextErrors = {
+      name: validateName(name),
+      email: validateEmail(email),
+      message: validateMessage(message)
+    };
+
+    setFieldErrors(nextErrors);
+    setIsSent(false);
+
+    if (nextErrors.name || nextErrors.email || nextErrors.message) {
+      return;
+    }
+
+    try {
+      void subject;
+      setIsSent(true);
+      setToastMessage("");
+      setName("");
+      setEmail("");
+      setMessage("");
+      setFieldErrors({});
+    } catch {
+      setToastMessage("Gagal mengirim pesan, silakan coba lagi");
+    }
+  }
 
   return (
     <main>
@@ -59,8 +120,8 @@ export function KontakPage() {
               Hubungi Kami
             </h1>
             <p className="mt-2 text-[14px] leading-7 text-[#6d746e] sm:text-[16px]">
-              Tim dukungan kami siap membantu kebutuhan logistik Anda. Hubungi kami melalui
-              kanal yang tersedia atau kirim pertanyaan langsung lewat formulir.
+              Tim dukungan kami siap membantu kebutuhan logistik Anda. Hubungi kami melalui kanal
+              yang tersedia atau kirim pertanyaan langsung lewat formulir.
             </p>
           </div>
 
@@ -106,18 +167,32 @@ export function KontakPage() {
                     Nama Lengkap
                   </label>
                   <input
+                    value={name}
+                    onChange={(event) => {
+                      setName(event.target.value);
+                      if (fieldErrors.name) setFieldError("name", validateName(event.target.value));
+                    }}
+                    onBlur={(event) => setFieldError("name", validateName(event.target.value))}
                     className="mt-2 h-11 w-full rounded-full border border-[#e2e8e1] bg-[#f1f4ef] px-4 text-[14px] text-[#38433c] outline-none"
                     placeholder="Masukkan nama Anda"
                   />
+                  {fieldErrors.name ? <p className="mt-2 text-[12px] font-medium text-[#b42318]">{fieldErrors.name}</p> : null}
                 </div>
                 <div>
                   <label className="text-[11px] font-bold uppercase tracking-[0.13em] text-[#4a534d]">
                     Alamat Email
                   </label>
                   <input
+                    value={email}
+                    onChange={(event) => {
+                      setEmail(event.target.value);
+                      if (fieldErrors.email) setFieldError("email", validateEmail(event.target.value));
+                    }}
+                    onBlur={(event) => setFieldError("email", validateEmail(event.target.value))}
                     className="mt-2 h-11 w-full rounded-full border border-[#e2e8e1] bg-[#f1f4ef] px-4 text-[14px] text-[#38433c] outline-none"
                     placeholder="email@perusahaan.com"
                   />
+                  {fieldErrors.email ? <p className="mt-2 text-[12px] font-medium text-[#b42318]">{fieldErrors.email}</p> : null}
                 </div>
               </div>
 
@@ -125,7 +200,11 @@ export function KontakPage() {
                 <label className="text-[11px] font-bold uppercase tracking-[0.13em] text-[#4a534d]">
                   Subjek Layanan
                 </label>
-                <select className="mt-2 h-11 w-full rounded-full border border-[#e2e8e1] bg-[#f1f4ef] px-4 text-[14px] text-[#38433c] outline-none">
+                <select
+                  value={subject}
+                  onChange={(event) => setSubject(event.target.value)}
+                  className="mt-2 h-11 w-full rounded-full border border-[#e2e8e1] bg-[#f1f4ef] px-4 text-[14px] text-[#38433c] outline-none"
+                >
                   <option>Pengiriman Domestik</option>
                   <option>Layanan Express</option>
                   <option>Klaim & Refund</option>
@@ -137,23 +216,28 @@ export function KontakPage() {
                   Pesan
                 </label>
                 <textarea
+                  value={message}
+                  onChange={(event) => {
+                    setMessage(event.target.value);
+                    if (fieldErrors.message) setFieldError("message", validateMessage(event.target.value));
+                  }}
+                  onBlur={(event) => setFieldError("message", validateMessage(event.target.value))}
                   rows={4}
                   className="mt-2 w-full resize-none rounded-[14px] border border-[#e2e8e1] bg-[#f1f4ef] px-4 py-3 text-[14px] text-[#38433c] outline-none"
                   placeholder="Ada yang bisa kami bantu?"
                 />
+                {fieldErrors.message ? <p className="mt-2 text-[12px] font-medium text-[#b42318]">{fieldErrors.message}</p> : null}
               </div>
 
               <button
                 type="button"
-                onClick={() => setIsSent(true)}
+                onClick={handleSubmit}
                 className="mt-5 inline-flex h-11 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#168049] to-[#12a662] px-6 text-[13px] font-semibold text-white shadow-[0_10px_22px_rgba(21,143,82,0.3)]"
               >
                 Kirim Pertanyaan
               </button>
               {isSent ? (
-                <p className="mt-3 text-[12px] font-semibold text-[#1b8248]">
-                  Pesan berhasil dikirim. Tim kami akan segera menghubungi Anda.
-                </p>
+                <p className="mt-3 text-[12px] font-semibold text-[#1b8248]">Pesan Anda berhasil dikirim!</p>
               ) : null}
             </article>
           </div>
@@ -175,9 +259,7 @@ export function KontakPage() {
             </article>
 
             <article className="reveal-on-scroll reveal-delay-1 rounded-[24px] border border-[#e3e8e2] bg-[#f8faf7] p-6 shadow-[0_18px_36px_rgba(173,183,168,0.16)]">
-              <h3 className="text-[27px] font-extrabold tracking-[-0.03em] text-[#2b332e]">
-                Lokasi Kantor
-              </h3>
+              <h3 className="text-[27px] font-extrabold tracking-[-0.03em] text-[#2b332e]">Lokasi Kantor</h3>
               <div className="mt-4 space-y-4 text-[13px] leading-6 text-[#5c665f]">
                 <div className="flex items-start gap-2">
                   <MapPinIcon className="mt-0.5 h-4 w-4 text-[#1b8248]" />
@@ -214,7 +296,9 @@ export function KontakPage() {
                   {OFFICE_PARTNERS.map((partner) => (
                     <li key={partner.name} className="rounded-[10px] border border-[#e6ece6] bg-white px-3 py-2">
                       <p className="text-[12px] font-bold text-[#294033]">{partner.name}</p>
-                      <p className="text-[11px] text-[#5d6d61]">{partner.area} | {partner.address}</p>
+                      <p className="text-[11px] text-[#5d6d61]">
+                        {partner.area} | {partner.address}
+                      </p>
                     </li>
                   ))}
                 </ul>
@@ -224,50 +308,8 @@ export function KontakPage() {
         </div>
       </section>
 
-      <footer className="mt-8 bg-white/85">
-        <div className="shell py-12">
-          <div className="grid gap-10 border-b border-[#e8ebe4] pb-10 md:grid-cols-2 lg:grid-cols-[1.4fr_0.7fr_0.7fr]">
-            <div>
-              <p className="text-[18px] font-extrabold tracking-[-0.03em] text-shipin-deep">SHIPIN GO</p>
-              <p className="mt-5 max-w-[360px] text-[15px] leading-8 text-shipin-text">
-                Solusi logistik terdepan di Indonesia. Menghubungkan orang dan bisnis
-                melalui sistem pengiriman yang cerdas dan efisien.
-              </p>
-            </div>
-            <div>
-              <p className="text-[15px] font-bold text-shipin-ink">Perusahaan</p>
-              <ul className="mt-5 space-y-4 text-[15px] text-shipin-text">
-                <li>Tentang Kami</li>
-                <li>Karir</li>
-                <li>Kontak</li>
-              </ul>
-            </div>
-            <div>
-              <p className="text-[15px] font-bold text-shipin-ink">Dukungan</p>
-              <ul className="mt-5 space-y-4 text-[15px] text-shipin-text">
-                <li>Pusat Bantuan</li>
-                <li>Syarat &amp; Ketentuan</li>
-                <li>Kebijakan Privasi</li>
-              </ul>
-            </div>
-          </div>
-          <div className="flex flex-col gap-4 pt-7 text-[14px] text-shipin-text sm:flex-row sm:items-center sm:justify-between">
-            <p>(c) 2024 SHIPIN GO. Hak Cipta Dilindungi.</p>
-            <div className="flex gap-6">
-              <a href="https://www.instagram.com/" target="_blank" rel="noreferrer" className="hover:text-shipin-deep">
-                Instagram
-              </a>
-              <a href="https://www.linkedin.com/" target="_blank" rel="noreferrer" className="hover:text-shipin-deep">
-                LinkedIn
-              </a>
-              <a href="https://x.com/" target="_blank" rel="noreferrer" className="hover:text-shipin-deep">
-                Twitter
-              </a>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <PublicFooter />
+      {toastMessage ? <PublicToast message={toastMessage} /> : null}
     </main>
   );
 }
-

@@ -1,6 +1,12 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 
 import { AdminDashboard } from "@/components/admin/admin-dashboard";
+
+export const metadata: Metadata = {
+  title: "Dashboard | SHIPIN GO Admin",
+  description: "Dashboard operasional admin SHIPIN GO."
+};
 
 export default function AdminDashboardPage() {
   return (

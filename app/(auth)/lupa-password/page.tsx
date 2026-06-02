@@ -4,7 +4,29 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-const TEMP_ADMIN_CREDENTIAL_KEY = "shipin_temp_admin_credential_v1";
+type FieldErrors = {
+  login?: string;
+  newPassword?: string;
+  confirmPassword?: string;
+};
+
+function validateLogin(value: string) {
+  if (!value.trim()) return "Email atau username tidak boleh kosong";
+  return "";
+}
+
+function validateNewPassword(value: string) {
+  if (!value) return "Password baru tidak boleh kosong";
+  if (value.length < 8) return "Password minimal 8 karakter";
+  if (!/\d/.test(value)) return "Password harus mengandung angka";
+  return "";
+}
+
+function validateConfirmPassword(value: string, sourcePassword: string) {
+  if (!value) return "Konfirmasi password tidak boleh kosong";
+  if (value !== sourcePassword) return "Password tidak cocok";
+  return "";
+}
 
 export default function LupaPasswordPage() {
   const router = useRouter();
@@ -13,75 +35,84 @@ export default function LupaPasswordPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [message, setMessage] = useState("");
   const [tone, setTone] = useState<"error" | "success">("success");
-  const [toastInfo, setToastInfo] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  function setFieldError<K extends keyof FieldErrors>(key: K, value: FieldErrors[K]) {
+    setFieldErrors((current) => ({
+      ...current,
+      [key]: value
+    }));
+  }
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setToastInfo("");
+    setMessage("");
 
-    if (!login.trim() || !newPassword.trim() || !confirmPassword.trim()) {
-      setTone("error");
-      setMessage("Lengkapi semua kolom terlebih dahulu.");
-      return;
-    }
-    if (newPassword.length < 8) {
-      setTone("error");
-      setMessage("Password baru minimal 8 karakter.");
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      setTone("error");
-      setMessage("Konfirmasi password tidak cocok.");
-      return;
-    }
+    const nextErrors: FieldErrors = {
+      login: validateLogin(login),
+      newPassword: validateNewPassword(newPassword),
+      confirmPassword: validateConfirmPassword(confirmPassword, newPassword)
+    };
 
-    const raw = window.localStorage.getItem(TEMP_ADMIN_CREDENTIAL_KEY);
-    if (!raw) {
+    setFieldErrors(nextErrors);
+    if (nextErrors.login || nextErrors.newPassword || nextErrors.confirmPassword) {
       setTone("error");
-      setMessage("Akun sementara belum terdaftar di perangkat ini. Silakan daftar dulu.");
       return;
     }
 
     try {
-      const parsed = JSON.parse(raw) as { login: string; password: string; name: string };
-      if (parsed.login !== login.trim().toLowerCase()) {
-        setTone("error");
-        setMessage("Email atau username tidak cocok dengan akun sementara.");
+      setIsSubmitting(true);
+      const response = await fetch("/api/admin/password-reset", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          login,
+          newPassword,
+          confirmPassword
+        })
+      });
+
+      const data = (await response.json().catch(() => null)) as
+        | { field?: keyof FieldErrors; message?: string }
+        | null;
+
+      if (!response.ok) {
+        if (data?.field && data?.message) {
+          setFieldError(data.field, data.message);
+        } else {
+          setTone("error");
+          setMessage(data?.message || "Terjadi kesalahan, silakan coba beberapa saat lagi");
+        }
         return;
       }
 
       setTone("success");
-      setMessage("");
-      setToastInfo("Info: Password berhasil diubah.");
+      setMessage(data?.message || "Password berhasil diubah! Mengalihkan ke halaman login...");
+      setFieldErrors({});
+      setLogin("");
+      setNewPassword("");
+      setConfirmPassword("");
       window.setTimeout(() => {
-        setToastInfo("");
         router.push("/login");
-      }, 1400);
+      }, 2000);
     } catch {
       setTone("error");
-      setMessage("Data akun sementara tidak valid. Silakan daftar ulang.");
+      setMessage("Terjadi kesalahan, silakan coba beberapa saat lagi");
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
   return (
     <main className="grid min-h-screen place-items-center bg-[radial-gradient(circle_at_top,_rgba(175,244,170,0.22),transparent_42%),#f3f7f1] px-4">
-      {toastInfo ? (
-        <div className="fixed right-5 top-5 z-50 flex items-center gap-2 rounded-xl border border-[#cbe8d1] bg-white px-4 py-3 text-[13px] font-semibold text-[#1f7a44] shadow-[0_14px_32px_rgba(69,117,80,0.22)]">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
-            <circle cx="12" cy="12" r="10" />
-            <path d="M12 8h.01" />
-            <path d="M11 12h1v4h1" />
-          </svg>
-          <span>{toastInfo}</span>
-        </div>
-      ) : null}
       <div className="w-full max-w-[520px] rounded-[28px] border border-[#e3eadf] bg-white p-6 shadow-[0_24px_60px_rgba(95,128,101,0.22)] sm:p-7">
         <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#5f7c68]">Admin Recovery</p>
         <h1 className="mt-2 text-[32px] font-extrabold leading-none text-[#1f3427] sm:text-[38px]">
           Lupa Password
         </h1>
         <p className="mt-3 text-[14px] leading-7 text-[#59655d]">
-          Atur ulang password akun sementara di perangkat ini.
+          Atur ulang password akun admin yang tersimpan di database Neon.
         </p>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-3.5">
@@ -92,10 +123,15 @@ export default function LupaPasswordPage() {
             <input
               type="text"
               value={login}
-              onChange={(event) => setLogin(event.target.value)}
+              onChange={(event) => {
+                setLogin(event.target.value);
+                if (fieldErrors.login) setFieldError("login", validateLogin(event.target.value));
+              }}
+              onBlur={(event) => setFieldError("login", validateLogin(event.target.value))}
               placeholder="admin@email.com"
               className="h-11 w-full rounded-xl border border-[#dde4db] bg-[#fbfdf9] px-4 text-[14px] text-[#213730] outline-none"
             />
+            {fieldErrors.login ? <p className="mt-2 text-[13px] font-medium text-[#b42318]">{fieldErrors.login}</p> : null}
           </div>
 
           <div>
@@ -105,10 +141,18 @@ export default function LupaPasswordPage() {
             <input
               type="password"
               value={newPassword}
-              onChange={(event) => setNewPassword(event.target.value)}
+              onChange={(event) => {
+                setNewPassword(event.target.value);
+                if (fieldErrors.newPassword) setFieldError("newPassword", validateNewPassword(event.target.value));
+                if (fieldErrors.confirmPassword) {
+                  setFieldError("confirmPassword", validateConfirmPassword(confirmPassword, event.target.value));
+                }
+              }}
+              onBlur={(event) => setFieldError("newPassword", validateNewPassword(event.target.value))}
               placeholder="Minimal 8 karakter"
               className="h-11 w-full rounded-xl border border-[#dde4db] bg-[#fbfdf9] px-4 text-[14px] text-[#213730] outline-none"
             />
+            {fieldErrors.newPassword ? <p className="mt-2 text-[13px] font-medium text-[#b42318]">{fieldErrors.newPassword}</p> : null}
           </div>
 
           <div>
@@ -118,24 +162,32 @@ export default function LupaPasswordPage() {
             <input
               type="password"
               value={confirmPassword}
-              onChange={(event) => setConfirmPassword(event.target.value)}
+              onChange={(event) => {
+                setConfirmPassword(event.target.value);
+                if (fieldErrors.confirmPassword) {
+                  setFieldError("confirmPassword", validateConfirmPassword(event.target.value, newPassword));
+                }
+              }}
+              onBlur={(event) => setFieldError("confirmPassword", validateConfirmPassword(event.target.value, newPassword))}
               placeholder="Ulangi password baru"
               className="h-11 w-full rounded-xl border border-[#dde4db] bg-[#fbfdf9] px-4 text-[14px] text-[#213730] outline-none"
             />
+            {fieldErrors.confirmPassword ? (
+              <p className="mt-2 text-[13px] font-medium text-[#b42318]">{fieldErrors.confirmPassword}</p>
+            ) : null}
           </div>
 
           <button
             type="submit"
+            disabled={isSubmitting}
             className="mt-1 inline-flex h-11 w-full items-center justify-center rounded-full bg-[#1a7332] px-7 text-[14px] font-semibold text-white"
           >
-            Simpan Password Baru
+            {isSubmitting ? "Menyimpan..." : "Simpan Password Baru"}
           </button>
         </form>
 
         {message ? (
-          <p
-            className={`mt-3 text-[13px] font-medium ${tone === "success" ? "text-[#1f7a44]" : "text-[#b42318]"}`}
-          >
+          <p className={`mt-3 text-[13px] font-medium ${tone === "success" ? "text-[#1f7a44]" : "text-[#b42318]"}`}>
             {message}
           </p>
         ) : null}

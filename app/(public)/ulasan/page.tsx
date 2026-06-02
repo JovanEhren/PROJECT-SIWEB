@@ -1,7 +1,13 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 
 import { PublicNavbar } from "@/components/public/navbar";
 import { UlasanPage } from "@/components/public/ulasan-page";
+
+export const metadata: Metadata = {
+  title: "Ulasan | SHIPIN GO",
+  description: "Baca dan kirim ulasan pelanggan SHIPIN GO."
+};
 
 export default function UlasanPublicPage() {
   return (

@@ -1,7 +1,13 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 
 import { LandingPage } from "@/components/public/landing-page";
 import { PublicNavbar } from "@/components/public/navbar";
+
+export const metadata: Metadata = {
+  title: "Beranda | SHIPIN GO",
+  description: "Solusi logistik terdepan di Indonesia."
+};
 
 function LoadingFallback() {
   return (

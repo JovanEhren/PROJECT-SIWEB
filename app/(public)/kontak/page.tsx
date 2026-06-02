@@ -1,7 +1,13 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 
 import { KontakPage } from "@/components/public/kontak-page";
 import { PublicNavbar } from "@/components/public/navbar";
+
+export const metadata: Metadata = {
+  title: "Kontak | SHIPIN GO",
+  description: "Hubungi tim SHIPIN GO untuk bantuan dan informasi layanan."
+};
 
 function LoadingFallback() {
   return (
@@ -23,4 +29,3 @@ export default function KontakPublicPage() {
     </>
   );
 }
-
