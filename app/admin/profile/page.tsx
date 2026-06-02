@@ -5,12 +5,6 @@ import { Suspense, useState } from "react";
 import { ShieldIcon, StarIcon, TruckIcon, UserIcon } from "@/components/icons";
 import { AdminLogoutButton } from "@/components/admin/admin-logout-button";
 
-const stats = [
-  { label: "TOTAL PENGIRIMAN", value: "124", tone: "bg-[#d9f2d6]", icon: "truck" },
-  { label: "RATING PENGIRIM", value: "4.9", tone: "bg-[#e3e7df]", icon: "star" },
-  { label: "STATUS AKUN", value: "Aktif", tone: "bg-[#d9f2d6]", icon: "shield" }
-];
-
 function RowLabel({ children }: { children: React.ReactNode }) {
   return <p className="mb-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-[#24463a]">{children}</p>;
 }
@@ -39,7 +33,8 @@ function PasswordField({
   onChange,
   show,
   onToggle,
-  hint
+  hint,
+  ariaLabel
 }: {
   label: string;
   value: string;
@@ -47,6 +42,7 @@ function PasswordField({
   show: boolean;
   onToggle: () => void;
   hint?: string;
+  ariaLabel: string;
 }) {
   return (
     <div>
@@ -62,7 +58,7 @@ function PasswordField({
           type="button"
           onClick={onToggle}
           className="absolute right-3 top-1/2 -translate-y-1/2 text-[#5e6d64]"
-          aria-label={show ? "Sembunyikan kata sandi" : "Lihat kata sandi"}
+          aria-label={ariaLabel}
         >
           {show ? (
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
@@ -88,13 +84,17 @@ function LoadingFallback() {
   return (
     <main className="min-h-[calc(100vh-80px)] bg-[#f2f5f1] px-4 py-5 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-[1540px] rounded-[28px] border border-[#e5ebe5] bg-white p-6 text-[13px] font-semibold text-[#5f6d63]">
-        Memuat profil...
+        Loading profile...
       </div>
     </main>
   );
 }
 
 function AdminProfilContent() {
+  // Language State
+  const [isEnglish, setIsEnglish] = useState(false);
+
+  // Form Fields State
   const [fullName, setFullName] = useState("Bagus Arya");
   const [email, setEmail] = useState("bagus.santoso@email.com");
   const [currentPassword, setCurrentPassword] = useState("password");
@@ -103,61 +103,76 @@ function AdminProfilContent() {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [language, setLanguage] = useState("Bahasa Indonesia (Default)");
   const [message, setMessage] = useState("");
   const [messageTone, setMessageTone] = useState<"error" | "success" | "info">("info");
+
+  // Dynamic Statistics Data based on language
+  const stats = [
+    { label: isEnglish ? "TOTAL SHIPMENTS" : "TOTAL PENGIRIMAN", value: "124", tone: "bg-[#d9f2d6]", icon: "truck" },
+    { label: isEnglish ? "SENDER RATING" : "RATING PENGIRIM", value: "4.9", tone: "bg-[#e3e7df]", icon: "star" },
+    { label: isEnglish ? "ACCOUNT STATUS" : "STATUS AKUN", value: isEnglish ? "Active" : "Aktif", tone: "bg-[#d9f2d6]", icon: "shield" }
+  ];
 
   function updateEmail() {
     if (!email.trim() || !email.includes("@")) {
       setMessageTone("error");
-      setMessage("Email tidak valid.");
+      setMessage(isEnglish ? "Invalid email address." : "Email tidak valid.");
       return;
     }
     setMessageTone("success");
-    setMessage("Email berhasil diperbarui.");
+    setMessage(isEnglish ? "Email updated successfully." : "Email berhasil diperbarui.");
   }
 
   function saveSecurity() {
     if (!currentPassword.trim() || !newPassword.trim() || !confirmPassword.trim()) {
       setMessageTone("error");
-      setMessage("Lengkapi semua kolom kata sandi.");
+      setMessage(isEnglish ? "Please fill in all password fields." : "Lengkapi semua kolom kata sandi.");
       return;
     }
     if (newPassword.length < 8) {
       setMessageTone("error");
-      setMessage("Kata sandi baru minimal 8 karakter.");
+      setMessage(isEnglish ? "New password must be at least 8 characters long." : "Kata sandi baru minimal 8 karakter.");
       return;
     }
     if (newPassword !== confirmPassword) {
       setMessageTone("error");
-      setMessage("Konfirmasi kata sandi tidak cocok.");
+      setMessage(isEnglish ? "Password confirmation does not match." : "Konfirmasi kata sandi tidak cocok.");
       return;
     }
     setMessageTone("success");
-    setMessage("Perubahan keamanan berhasil disimpan.");
+    setMessage(isEnglish ? "Security changes saved successfully." : "Perubahan keamanan berhasil disimpan.");
   }
 
-  function changeLanguage() {
-    const next =
-      language === "Bahasa Indonesia (Default)" ? "English (Default)" : "Bahasa Indonesia (Default)";
-    setLanguage(next);
+  function toggleLanguage() {
+    const nextLang = !isEnglish;
+    setIsEnglish(nextLang);
     setMessageTone("info");
-    setMessage(`Bahasa diubah ke ${next}.`);
+    setMessage(
+      nextLang 
+        ? "Language changed to English (Default)." 
+        : "Bahasa diubah ke Bahasa Indonesia (Default)."
+    );
   }
 
   return (
     <main className="min-h-[calc(100vh-80px)] bg-[#f2f5f1] px-4 py-5 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-[1540px]">
+        {/* Header Section */}
         <section className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h1 className="text-[34px] font-extrabold leading-none text-[#185338] md:text-[50px]">Profil & Pengaturan</h1>
+            <h1 className="text-[34px] font-extrabold leading-none text-[#185338] md:text-[50px]">
+              {isEnglish ? "Profile & Settings" : "Profil & Pengaturan"}
+            </h1>
             <p className="mt-2 text-[13px] text-[#445149] md:text-[16px]">
-              Kelola informasi akun Anda dan pastikan keamanan data logistik Anda tetap terjaga.
+              {isEnglish 
+                ? "Manage your account information and ensure your logistics data security remains intact." 
+                : "Kelola informasi akun Anda dan pastikan keamanan data logistik Anda tetap terjaga."}
             </p>
           </div>
           <AdminLogoutButton />
         </section>
 
+        {/* Feedback Messages */}
         {message ? (
           <p
             className={`mt-3 rounded-lg px-3 py-2 text-[12px] font-semibold ${
@@ -174,6 +189,7 @@ function AdminProfilContent() {
 
         <section className="mt-7 grid gap-5 lg:grid-cols-[1.55fr_1fr]">
           <div className="space-y-4">
+            {/* Account Details Card */}
             <article className="rounded-[30px] border border-[#e5ebe5] bg-white px-6 py-6 shadow-[0_8px_30px_rgba(25,45,33,0.05)] md:px-7">
               <div className="flex items-center gap-4">
                 <div className="relative h-[95px] w-[95px] rounded-[28px] border-[3px] border-[#79de8c] bg-[#f6fbf5]">
@@ -186,10 +202,14 @@ function AdminProfilContent() {
                     type="button"
                     onClick={() => {
                       setMessageTone("info");
-                      setMessage("Fitur ubah foto profil akan diaktifkan pada integrasi media.");
+                      setMessage(
+                        isEnglish 
+                          ? "Profile picture edit feature will be enabled upon media integration." 
+                          : "Fitur ubah foto profil akan diaktifkan pada integrasi media."
+                      );
                     }}
                     className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-[#1f8f55] text-white shadow-sm"
-                    aria-label="Edit foto profil"
+                    aria-label={isEnglish ? "Edit profile picture" : "Edit foto profil"}
                   >
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
                       <path d="M12 20h9" />
@@ -198,14 +218,18 @@ function AdminProfilContent() {
                   </button>
                 </div>
                 <div>
-                  <h2 className="text-[23px] font-extrabold text-[#153528] md:text-[26px]">Detail Akun</h2>
-                  <p className="text-sm text-[#5f6b64]">Informasi dasar Anda yang terdaftar di sistem.</p>
+                  <h2 className="text-[23px] font-extrabold text-[#153528] md:text-[26px]">
+                    {isEnglish ? "Account Details" : "Detail Akun"}
+                  </h2>
+                  <p className="text-sm text-[#5f6b64]">
+                    {isEnglish ? "Your basic information registered in the system." : "Informasi dasar Anda yang terdaftar di sistem."}
+                  </p>
                 </div>
               </div>
 
               <div className="mt-5 grid gap-3 md:grid-cols-2">
                 <div>
-                  <RowLabel>Nama Lengkap</RowLabel>
+                  <RowLabel>{isEnglish ? "Full Name" : "Nama Lengkap"}</RowLabel>
                   <input
                     value={fullName}
                     onChange={(event) => setFullName(event.target.value)}
@@ -213,16 +237,18 @@ function AdminProfilContent() {
                   />
                 </div>
                 <div>
-                  <RowLabel>Username</RowLabel>
+                  <RowLabel>{isEnglish ? "Username" : "Username"}</RowLabel>
                   <div className="h-12 rounded-xl bg-[#f2f5ef] px-4 text-[15px] leading-[48px] text-[#9ca8a1]">
                     adminship1
                   </div>
-                  <p className="mt-1 text-[11px] text-[#98a29d]">Username tidak dapat diubah.</p>
+                  <p className="mt-1 text-[11px] text-[#98a29d]">
+                    {isEnglish ? "Username cannot be changed." : "Username tidak dapat diubah."}
+                  </p>
                 </div>
               </div>
 
               <div className="mt-3">
-                <RowLabel>Email</RowLabel>
+                <RowLabel>{isEnglish ? "Email" : "Email"}</RowLabel>
                 <div className="flex flex-wrap gap-2">
                   <input
                     value={email}
@@ -234,12 +260,13 @@ function AdminProfilContent() {
                     onClick={updateEmail}
                     className="h-12 rounded-full bg-[#84e88c] px-7 text-[15px] font-semibold text-[#1a5a35]"
                   >
-                    Update
+                    {isEnglish ? "Update" : "Update"}
                   </button>
                 </div>
               </div>
             </article>
 
+            {/* Statistics Row */}
             <div className="grid gap-3 sm:grid-cols-3">
               {stats.map((item) => (
                 <article key={item.label} className={`${item.tone} rounded-[24px] px-5 py-4`}>
@@ -259,6 +286,7 @@ function AdminProfilContent() {
             </div>
           </div>
 
+          {/* Security Management Card */}
           <article className="rounded-[30px] border border-[#e5ebe5] bg-white px-6 py-6 shadow-[0_8px_30px_rgba(25,45,33,0.05)] md:px-7">
             <div className="flex items-center gap-3">
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#fee7e5]">
@@ -266,36 +294,55 @@ function AdminProfilContent() {
                   <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" />
                 </svg>
               </div>
-              <h2 className="text-[34px] font-extrabold leading-none text-[#153528]">Keamanan</h2>
+              <h2 className="text-[34px] font-extrabold leading-none text-[#153528]">
+                {isEnglish ? "Security" : "Keamanan"}
+              </h2>
             </div>
             <p className="mt-3 text-[14px] leading-relaxed text-[#4f5c56]">
-              Ganti kata sandi Anda secara berkala untuk menjaga keamanan akun SHIPIN GO.
+              {isEnglish 
+                ? "Change your password regularly to secure your SHIPIN GO account." 
+                : "Ganti kata sandi Anda secara berkala untuk menjaga keamanan akun SHIPIN GO."}
             </p>
 
             <div className="mt-5 space-y-4">
               <PasswordField
-                label="Kata Sandi Saat Ini"
+                label={isEnglish ? "Current Password" : "Kata Sandi Saat Ini"}
                 value={currentPassword}
                 onChange={setCurrentPassword}
                 show={showCurrentPassword}
                 onToggle={() => setShowCurrentPassword((prev) => !prev)}
+                ariaLabel={
+                  showCurrentPassword 
+                    ? (isEnglish ? "Hide password" : "Sembunyikan kata sandi") 
+                    : (isEnglish ? "Show password" : "Lihat kata sandi")
+                }
               />
 
               <PasswordField
-                label="Kata Sandi Baru"
+                label={isEnglish ? "New Password" : "Kata Sandi Baru"}
                 value={newPassword}
                 onChange={setNewPassword}
                 show={showNewPassword}
                 onToggle={() => setShowNewPassword((prev) => !prev)}
-                hint="Minimal 8 karakter dengan kombinasi angka"
+                hint={isEnglish ? "Minimum 8 characters with a mix of numbers" : "Minimal 8 karakter dengan kombinasi angka"}
+                ariaLabel={
+                  showNewPassword 
+                    ? (isEnglish ? "Hide password" : "Sembunyikan kata sandi") 
+                    : (isEnglish ? "Show password" : "Lihat kata sandi")
+                }
               />
 
               <PasswordField
-                label="Konfirmasi Kata Sandi Baru"
+                label={isEnglish ? "Confirm New Password" : "Konfirmasi Kata Sandi Baru"}
                 value={confirmPassword}
                 onChange={setConfirmPassword}
                 show={showConfirmPassword}
                 onToggle={() => setShowConfirmPassword((prev) => !prev)}
+                ariaLabel={
+                  showConfirmPassword 
+                    ? (isEnglish ? "Hide password" : "Sembunyikan kata sandi") 
+                    : (isEnglish ? "Show password" : "Lihat kata sandi")
+                }
               />
             </div>
 
@@ -309,32 +356,41 @@ function AdminProfilContent() {
                 <path d="M17 21v-8H7v8" />
                 <path d="M7 3v5h8" />
               </svg>
-              Simpan Perubahan
+              {isEnglish ? "Save Changes" : "Simpan Perubahan"}
             </button>
             <button
               type="button"
               onClick={() => {
                 setMessageTone("info");
-                setMessage("Silakan hubungi super admin untuk reset kata sandi.");
+                setMessage(
+                  isEnglish 
+                    ? "Please contact the super admin to reset your password." 
+                    : "Silakan hubungi super admin untuk reset kata sandi."
+                );
               }}
               className="mt-4 w-full text-center text-[14px] text-[#5d6962]"
             >
-              Lupa kata sandi?
+              {isEnglish ? "Forgot password?" : "Lupa kata sandi?"}
             </button>
           </article>
         </section>
 
+        {/* Language Selection Card */}
         <section className="mt-2">
           <article
             className="flex max-w-[620px] items-center justify-between rounded-[24px] border border-[#e5ebe5] bg-[#f5f8f2] px-5 py-4"
           >
-            <button type="button" onClick={changeLanguage} className="flex items-center gap-3 text-left">
+            <button type="button" onClick={toggleLanguage} className="flex items-center gap-3 text-left">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#ecf0ea]">
                 <GlobeIcon />
               </div>
               <div>
-                <p className="text-[18px] font-semibold leading-none text-[#253a33]">Pengaturan Bahasa</p>
-                <p className="mt-1 text-[12px] text-[#65726b]">{language}</p>
+                <p className="text-[18px] font-semibold leading-none text-[#253a33]">
+                  {isEnglish ? "Language Settings" : "Pengaturan Bahasa"}
+                </p>
+                <p className="mt-1 text-[12px] text-[#65726b]">
+                  {isEnglish ? "English (Default)" : "Bahasa Indonesia (Default)"}
+                </p>
               </div>
             </button>
             <ChevronRight />
